@@ -1,0 +1,26 @@
+.login-container{
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:#f5f5f5;
+}
+
+.card{
+  width:350px;
+  background:white;
+  padding:30px;
+  border-radius:10px;
+  box-shadow:0 0 10px rgba(0,0,0,.2);
+}
+
+input{
+  width:100%;
+  padding:10px;
+  margin-bottom:15px;
+}
+
+button{
+  width:100%;
+  padding:10px;
+}

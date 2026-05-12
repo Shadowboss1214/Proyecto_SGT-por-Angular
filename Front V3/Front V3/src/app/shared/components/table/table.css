@@ -1,0 +1,73 @@
+.filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.filters input {
+  flex: 1;
+}
+
+.filters button {
+  background: #3b82f6;
+  color: white;
+}
+
+.filters button:hover {
+  background: #2563eb;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+thead {
+  background: #f8fafc;
+}
+
+th {
+  text-align: left;
+  padding: 14px;
+  font-weight: 600;
+  color: #475569;
+}
+
+td {
+  padding: 14px;
+  border-top: 1px solid #e2e8f0;
+}
+
+tr:hover {
+  background: #f1f5f9;
+}
+
+td button {
+  margin-right: 6px;
+  font-size: 12px;
+  padding: 6px 10px;
+}
+
+td button:nth-child(1) {
+  background: #64748b;
+  color: white;
+}
+
+td button:nth-child(2) {
+  background: #22c55e;
+  color: white;
+}
+
+td button:nth-child(3) {
+  background: #ef4444;
+  color: white;
+}
+
+td button:hover {
+  opacity: 0.9;
+}

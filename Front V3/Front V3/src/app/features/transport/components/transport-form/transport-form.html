@@ -1,0 +1,76 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="form">
+
+  <div class="field">
+    <label>Nombre</label>
+    <input formControlName="name" />
+
+    @if (form.get('name')?.touched && form.get('name')?.invalid) {
+    <small>
+      El nombre es obligatorio
+    </small>
+    }
+  </div>
+
+  <div class="field">
+    <label>Tipo</label>
+    <input formControlName="type" />
+    @if (form.get('type')?.touched && form.get('type')?.invalid) {
+    <small>
+      El tipo es obligatorio
+    </small>
+    }
+  </div>
+
+  <div class="field">
+    <label>Placa</label>
+    <input formControlName="plate" />
+    @if (form.get('plate')?.touched && form.get('plate')?.invalid) {
+    <small>
+      Mínimo 5 caracteres
+    </small>
+    }
+  </div>
+
+  <div class="field">
+    <label>Estado</label>
+    <select formControlName="status">
+      <option value="Activo">Activo</option>
+      <option value="Inactivo">Inactivo</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Costo por Km</label>
+    <input formControlName="costPerKm" />
+    @if (form.get('costPerKm')?.touched && form.get('costPerKm')?.invalid) {
+    <small>
+      El costo por kilometro del vehiculo es nescesario
+    </small>
+    }
+  </div>
+
+  <div class="field">
+    <label>Costo de mantenimiento</label>
+    <input formControlName="maintenanceCost" />
+    @if (form.get('maintenanceCost')?.touched && form.get('maintenanceCost')?.invalid) {
+    <small>
+      El costo de mantenimiento del vehiculo es nescesario
+    </small>
+    }
+  </div>
+
+  <div class="field">
+    <label>Consumo de conbustible</label>
+    <input formControlName="fuelConsumption" />
+    @if (form.get('fuelConsumption')?.touched && form.get('fuelConsumption')?.invalid) {
+    <small>
+      El consumo de combustible del vehiculo es nescesario
+    </small>
+    }
+  </div>
+
+  <button type="submit" [disabled]="form.invalid">
+    Guardar
+  </button>
+
+</form>

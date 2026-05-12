@@ -1,0 +1,49 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()"> <label>Vehículo</label>
+  <select formControlName="id_transport"> <option [value]="null" disabled>Selecciona un vehículo</option>
+    @for (t of transport; track t.id_transport) {
+      <option [value]="t.id_transport">{{ t.name }}</option>
+    }
+  </select>
+
+  <label>Empleado</label>
+  <select formControlName="id_employee"> <option [value]="null" disabled>Selecciona un empleado</option>
+    @for (e of employes; track e.id_employee) {
+      <option [value]="e.id_employee">{{ e.name }}</option>
+    }
+  </select>
+
+  <label>Ruta</label>
+  <select formControlName="id_route">
+    <option [value]="null" disabled>Selecciona una ruta</option>
+    @for (r of tripRoute; track r.id_route) {
+      <option [value]="r.id_route">{{ r.origin }} - {{ r.destine }}</option>
+    }
+  </select>
+
+  <div class="field">
+    <label>Ganancia</label>
+    <input type="number" formControlName="income" />
+    @if (form.get('income')?.touched && form.get('income')?.invalid) {
+      <small>La ganancia es obligatoria y debe ser numérica.</small>
+    }
+  </div>
+
+  <div class="field">
+    <label>Costo de combustible</label>
+    <input type="number" formControlName="fuelcost" /> @if (form.get('fuelcost')?.touched && form.get('fuelcost')?.invalid) {
+      <small>El costo es obligatorio y debe ser numérico.</small>
+    }
+  </div>
+
+  <div class="field">
+    <label>Fecha</label>
+    <input type="date" formControlName="date" />
+    @if (form.get('date')?.touched && form.get('date')?.invalid) {
+      <small>La fecha es obligatoria.</small>
+    }
+  </div>
+
+  <button type="submit" [disabled]="form.invalid">
+    Guardar
+  </button>
+</form>

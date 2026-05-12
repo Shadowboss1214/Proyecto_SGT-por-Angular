@@ -1,0 +1,17 @@
+.filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+
+.filters button {
+  background: #3b82f6;
+  color: white;
+}
+
+.filters button:hover {
+  background: #2563eb;
+}
+

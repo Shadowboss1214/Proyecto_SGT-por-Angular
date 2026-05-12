@@ -1,0 +1,24 @@
+@if (!isEdit && trip) {
+  <h2>Detalle del Trayecto</h2>
+  <div class="container">
+    <p><strong>ID Transporte:</strong> {{ trip.id_transport }}</p>
+    <p><strong>ID Empleado:</strong> {{ trip.id_employee }}</p>
+    <p><strong>ID Ruta:</strong> {{ trip.id_route }}</p>
+    <p><strong>Ingresos:</strong> {{ trip.income | currency }}</p>
+    <p><strong>Costo Combustible:</strong> {{ trip.fuelcost | currency }}</p> <p><strong>Fecha:</strong> {{ trip.date }}</p>
+
+    <div class="actions">
+      <button [routerLink]="['edit']">Editar</button>
+      <button (click)="delete(trip.id_trip.toString())">Eliminar</button>
+    </div>
+  </div>
+}
+
+@if (isEdit) {
+  <h2>{{ trip ? 'Editar Registro' : 'Nuevo Registro' }}</h2>
+  <div class="container">
+    <app-trips-form 
+      [data]="trip" 
+      [id]="trip?.id_trip"> </app-trips-form>
+  </div>
+}

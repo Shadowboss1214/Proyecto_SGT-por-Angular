@@ -1,0 +1,27 @@
+h1 {
+  margin-bottom: 20px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.card h3 {
+  font-size: 14px;
+  color: #64748b;
+}
+
+.card p {
+  font-size: 28px;
+  font-weight: bold;
+  margin-top: 10px;
+}

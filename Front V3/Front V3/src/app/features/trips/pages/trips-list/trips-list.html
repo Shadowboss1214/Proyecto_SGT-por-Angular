@@ -1,0 +1,16 @@
+<h2>Transportes</h2>
+
+<div class="filters">
+    <input placeholder="Buscar por id de transporte o empleado" #searchInput
+        (input)="onSearchChange(searchInput.value)" />
+
+    <button routerLink="new">Nuevo</button>
+</div>
+
+<app-table 
+  [data]="filtered"
+  [columns]="columns"
+  (view)="onView($event)"
+  (edit)="onEdit($event)"
+  (delete)="onDelete($event)">
+</app-table>

@@ -1,0 +1,22 @@
+<h2>Transportes</h2>
+
+<div class="filters">
+    <input placeholder="Buscar por nombre o placa" #searchInput
+        (input)="onSearchChange(searchInput.value)" />
+
+    <select #statusSelect (change)="onStatusChange(statusSelect.value)">
+        <option value="">Todos</option>
+        <option value="Activo">Activo</option>
+        <option value="Inactivo">Inactivo</option>
+    </select>
+
+    <button routerLink="new">Nuevo</button>
+</div>
+
+<app-table 
+  [data]="filtered"
+  [columns]="columns"
+  (view)="onView($event)"
+  (edit)="onEdit($event)"
+  (delete)="onDelete($event)">
+</app-table>

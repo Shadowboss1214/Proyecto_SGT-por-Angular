@@ -1,0 +1,9 @@
+<h1>Principal</h1>
+<div class="cards">
+  @for (stat of stats; track $index) {
+  <div class="card">
+    <h3>{{ stat.title }}</h3>
+    <p>{{ stat.value }}</p>
+  </div>
+  }
+</div>

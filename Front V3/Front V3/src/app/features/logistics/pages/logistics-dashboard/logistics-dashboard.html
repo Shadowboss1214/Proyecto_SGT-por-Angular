@@ -1,0 +1,51 @@
+<h2>Logística</h2>
+
+<div class="kpis">
+    <div class="card">
+        <h3>Ingresos</h3>
+        <p>{{ totalIncome | currency }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Gastos</h3>
+        <p>{{ totalCost | currency }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Utilidad</h3>
+        <p>{{ profit | currency }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Eficiencia</h3>
+        <p>{{ efficiency | number:'1.0-2' }} %</p>
+    </div>
+
+</div>
+
+<div class="charts">
+
+        <div class="card">
+            <h3>Ingresos vs Gastos</h3>
+            <canvas baseChart [data]="barChartData" chartType="bar">
+            </canvas>
+        </div>
+
+        <div class="card">
+            <h3>Viajes por día</h3>
+            <canvas baseChart [data]="lineChartData" chartType="line">
+            </canvas>
+        </div>
+
+    </div>
+
+<div class="charts">
+    <div class="card">
+        <h3>Resumen</h3>
+        <p>Total de viajes: {{ totalTrips }}</p>
+    </div>
+</div>
+
+<div class="insight">
+    {{ insight }}
+</div>

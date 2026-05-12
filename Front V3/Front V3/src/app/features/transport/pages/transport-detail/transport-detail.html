@@ -1,0 +1,27 @@
+@if(!isEdit && transport){
+    <h2>Detalle</h2>
+<div class="container">
+    <p><strong>Nombre:</strong> {{ transport.name }}</p>
+    <p><strong>Tipo:</strong> {{ transport.type }}</p>
+    <p><strong>Placa:</strong> {{ transport.plate }}</p>
+    <p><strong>Estado:</strong> {{ transport.status }}</p>
+    <p><strong>Costo por Km:</strong> {{ transport.costperkm }}</p>
+    <p><strong>Costo de mantenimiento:</strong> {{ transport.maintenancecost }}</p>
+    <p><strong>Costo de combustible:</strong> {{ transport.fuelconsumption }}</p>
+
+    <div class="actions">
+        <button [routerLink]="['edit']">Editar</button>
+        <button (click)="delete($any(transport).id)">Eliminar</button>
+    </div>
+</div>
+}
+
+@if(isEdit){
+    <h2>{{transport ? 'Editar Transporte':'Nuevo Transporte'}}</h2>
+<div class="container">
+    <app-transport-form 
+        [data]="transport"
+        [id]="$any(transport)?.id">
+    </app-transport-form>
+</div>
+}

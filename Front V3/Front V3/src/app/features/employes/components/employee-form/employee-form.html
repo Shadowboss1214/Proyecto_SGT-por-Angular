@@ -1,0 +1,28 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="form">
+
+  <div class="field">
+    <label>Nombre</label>
+    <input formControlName="name"/>
+    
+    @if (form.get('name')?.touched && form.get('name')?.invalid) {
+    <small>
+      El nombre es obligatorio
+    </small>
+    }
+  </div>
+
+  <div class="field">
+    <label>Salario</label>
+    <input formControlName="salary"/>
+    @if (form.get('salary')?.touched && form.get('salary')?.invalid) {
+    <small>
+      El salario es obligatorio. Debe ser numerico, puede tener hasta con 2 decimales
+    </small>
+    }
+  </div>
+
+  <button position="submit" [disabled]="form.invalid">
+    Guardar
+  </button>
+
+</form>

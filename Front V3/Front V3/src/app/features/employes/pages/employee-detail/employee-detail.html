@@ -1,0 +1,26 @@
+@if(!isEdit && employee){
+    <h2>Detalle</h2>
+<div class="container">
+    <p><strong>Nombre:</strong> {{ employee.name }}</p>
+    <p><strong>Salario:</strong> {{ employee.salary }}</p>
+    
+    @if(employee.position) {
+        <p><strong>Posición:</strong> {{ employee.position }}</p>
+    }
+
+    <div class="actions">
+        <button [routerLink]="['edit']">Editar</button>
+        <button (click)="delete(employee.id_employee.toString())">Eliminar</button>
+    </div>
+</div>
+}
+
+@if(isEdit && employee){
+    <h2>{{employee ? 'Editar Empleado':'Nuevo Empleado'}}</h2>
+<div class="container">
+    <app-Employee-form 
+        [data]="employee"
+        [id]="employee.id_employee.toString()">
+    </app-Employee-form>
+</div>
+}

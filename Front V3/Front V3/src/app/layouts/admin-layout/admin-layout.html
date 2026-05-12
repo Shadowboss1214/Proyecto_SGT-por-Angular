@@ -1,0 +1,32 @@
+<div class="layout">
+  <div class="sidebar">
+    <h2 class="logo">Sistema de Gestión de Transportes </h2>
+
+    <nav>
+      <a routerLink="/admin/dashboard" routerLinkActive="active">
+        Principal
+      </a>
+
+      <a routerLink="/admin/transport" routerLinkActive="active">
+        Transportes
+      </a>
+
+      <a routerLink="/admin/employee" routerLinkActive="active">
+        Empleados
+      </a>
+
+      <a routerLink="/admin/trips" routerLinkActive="active">
+        Viajes
+      </a>
+
+      <a routerLink="/admin/logistics" routerLinkActive="active">
+        Logística
+      </a>
+      
+    </nav>
+  </div>
+  <div class="content">
+    <router-outlet></router-outlet>
+  </div>
+  
+</div>
