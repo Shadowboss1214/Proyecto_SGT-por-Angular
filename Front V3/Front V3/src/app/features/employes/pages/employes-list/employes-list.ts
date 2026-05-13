@@ -9,7 +9,7 @@ import { ReportService } from '../../../../core/services/report.service';
 @Component({
   selector: 'app-employee-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, TableComponent, ReportService],
+  imports: [CommonModule, RouterModule, TableComponent],
   templateUrl: './employes-list.html',
   styleUrl: './employes-list.css'
 })
