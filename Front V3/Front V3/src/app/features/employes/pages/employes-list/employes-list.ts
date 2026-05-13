@@ -4,11 +4,12 @@ import { EmployeeService } from '../../services/employes';
 import { Employee } from '../../models/employee';
 import { RouterModule, Router } from '@angular/router';
 import {TableComponent} from '../../../../shared/components/table/table';
+import { ReportService } from '../../../../core/services/report.service';
 
 @Component({
   selector: 'app-employee-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, TableComponent],
+  imports: [CommonModule, RouterModule, TableComponent, ReportService],
   templateUrl: './employes-list.html',
   styleUrl: './employes-list.css'
 })
@@ -17,6 +18,7 @@ export class EmployeeListComponent implements OnInit {
 
   private service = inject(EmployeeService);
   private router = inject(Router);
+  private reportService = inject(ReportService);
 
   search = '';
   statusFilter = '';
@@ -66,5 +68,21 @@ export class EmployeeListComponent implements OnInit {
     this.service.getAll().subscribe(data => {
       this.Employes = data;
     });
+  }
+
+  exportPdf(): void {
+    this.reportService.exportToPdf(
+      this.filtered,
+      this.columns,
+      'Reporte de Empleados'
+    );
+  }
+
+  exportExcel(): void {
+    this.reportService.exportToExcel(
+      this.filtered,
+      this.columns,
+      'reporte_empleados.xlsx'
+    );
   }
 }
