@@ -34,7 +34,7 @@ export class LoginComponent {
 
         // Lógica de redirección basada en tu diseño
         // Nota: Si Laminas no devuelve "role", por ahora usaremos tu lógica de nombre
-        if (this.username === 'gael_Admin') {
+        if (this.username === 'gael_Admin' || this.username === 'julian_Admin') {
           this.router.navigate(['/admin']);
         } else {
           this.router.navigate(['/driver']);
