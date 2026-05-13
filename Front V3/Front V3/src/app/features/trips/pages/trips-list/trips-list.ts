@@ -7,6 +7,8 @@ import { TableComponent } from '../../../../shared/components/table/table';
 import { Employee } from '../../../employes/models/employee';
 import { Transport } from '../../../transport/models/transport';
 import { AuthService } from '../../../login';
+import { ReportService } from '../../../../core/services/report.service';
+
 
 
 @Component({
@@ -22,6 +24,7 @@ export class TripsListComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
+  private reportService = inject(ReportService);
 
   role = this.route.pathFromRoot
     .map(r => r.snapshot.data['role'])
@@ -105,5 +108,21 @@ export class TripsListComponent implements OnInit {
 
   onStatusChange(value: string) {
     this.statusFilter = value;
+  }
+
+  exportPdf(): void {
+    this.reportService.exportToPdf(
+      this.filtered,
+      this.columns,
+      'Reporte de Viajes'
+    );
+  }
+
+  exportExcel(): void {
+    this.reportService.exportToExcel(
+      this.filtered,
+      this.columns,
+      'reporte_viajes.xlsx'
+    );
   }
 }

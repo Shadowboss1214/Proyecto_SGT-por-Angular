@@ -1,10 +1,18 @@
-<h2>Transportes</h2>
+<h2>Viajes</h2>
 
 <div class="filters">
-    <input placeholder="Buscar por id de transporte o empleado" #searchInput
+    <input placeholder="Buscar por transporte o empleado" #searchInput
         (input)="onSearchChange(searchInput.value)" />
 
     <button routerLink="new">Nuevo</button>
+
+    <button class="btn-export btn-pdf" (click)="exportPdf()" title="Exportar a PDF">
+        📄 PDF
+    </button>
+
+    <button class="btn-export btn-excel" (click)="exportExcel()" title="Exportar a Excel">
+        📊 Excel
+    </button>
 </div>
 
 <app-table 
