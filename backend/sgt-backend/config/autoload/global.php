@@ -19,4 +19,12 @@ return [
             ],
         ],
     ],
+    'api-tools-mvc-auth' => [
+        'authentication' => [
+            'map' => [
+                // Esto es vital: mapea tu API de empleados al adaptador de OAuth2
+                'employees\\V1' => 'oauth2postgres',
+            ],
+        ],
+    ],
 ];

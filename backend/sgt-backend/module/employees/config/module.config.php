@@ -22,7 +22,7 @@ return [
         'employees\\V1\\Rest\\Employees\\Controller' => [
             'listener' => 'employees\\V1\\Rest\\Employees\\EmployeesResource',
             'route_name' => 'employees.rest.employees',
-            'route_identifier_name' => 'employees_id',
+            'route_identifier_name' => 'employee_id',
             'collection_name' => 'employees',
             'entity_http_methods' => [
                 0 => 'GET',
@@ -34,7 +34,9 @@ return [
                 0 => 'GET',
                 1 => 'POST',
             ],
-            'collection_query_whitelist' => [],
+            'collection_query_whitelist' => [
+                0 => 'username',
+            ],
             'page_size' => 25,
             'page_size_param' => null,
             'entity_class' => \employees\V1\Rest\Employees\EmployeesEntity::class,
@@ -63,15 +65,15 @@ return [
     'api-tools-hal' => [
         'metadata_map' => [
             \employees\V1\Rest\Employees\EmployeesEntity::class => [
-                'entity_identifier_name' => 'id',
+                'entity_identifier_name' => 'id_employee',
                 'route_name' => 'employees.rest.employees',
-                'route_identifier_name' => 'employees_id',
+                'route_identifier_name' => 'employee_id',
                 'hydrator' => \Laminas\Hydrator\ArraySerializableHydrator::class,
             ],
             \employees\V1\Rest\Employees\EmployeesCollection::class => [
-                'entity_identifier_name' => 'id',
+                'entity_identifier_name' => 'id_employee',
                 'route_name' => 'employees.rest.employees',
-                'route_identifier_name' => 'employees_id',
+                'route_identifier_name' => 'employee_id',
                 'is_collection' => true,
             ],
         ],
@@ -83,7 +85,8 @@ return [
                 'table_name' => 'employees',
                 'hydrator_name' => \Laminas\Hydrator\ArraySerializableHydrator::class,
                 'controller_service_name' => 'employees\\V1\\Rest\\Employees\\Controller',
-                'entity_identifier_name' => 'id',
+                'entity_identifier_name' => 'id_employee',
+                'table_service' => 'employees\\V1\\Rest\\Employees\\EmployeesResource\\Table',
             ],
         ],
     ],
@@ -112,6 +115,18 @@ return [
                 'filters' => [],
                 'validators' => [],
             ],
+            3 => [
+                'required' => true,
+                'validators' => [],
+                'filters' => [],
+                'name' => 'role',
+            ],
+            4 => [
+                'required' => true,
+                'validators' => [],
+                'filters' => [],
+                'name' => 'username',
+            ],
         ],
     ],
     'api-tools-mvc-auth' => [
@@ -128,8 +143,8 @@ return [
                     'GET' => true,
                     'POST' => false,
                     'PUT' => true,
-                    'PATCH' => false,
-                    'DELETE' => false,
+                    'PATCH' => true,
+                    'DELETE' => true,
                 ],
             ],
         ],

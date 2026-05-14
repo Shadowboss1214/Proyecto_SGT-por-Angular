@@ -24,17 +24,37 @@ export class LoginComponent {
 
   onSubmit() {
     if (this.loginForm.valid) {
+      // Aquí ya tienes los valores extraídos del formulario
       const { username, password } = this.loginForm.value;
       
-      this.authService.login(username!, password!).subscribe({
-        next: (response) => {
+      // DEBES QUITAR EL 'this.' porque son constantes locales, no propiedades de la clase
+      // También agregamos el "!" o aseguramos que no sean nulos para TS
+      this.authService.login({ 
+        username: username!, 
+        password: password! 
+      }).subscribe({
+        next: (response: any) => {
+          this.authService.saveToken(response.access_token);
           console.log('¡Login exitoso!', response);
-          // Después del login, mandamos al usuario a la lista de viajes
-          this.router.navigate(['/trips']);
+          
+          // Lógica de redirección por roles (como la teníamos antes)
+          this.authService.getEmployeeByUsername(username!, response.access_token).subscribe({
+            next: (data: any) => {
+              const employees = data._embedded?.employees;
+              const currentEmployee = employees?.find((e: any) => e.username === username);
+
+              if (currentEmployee?.role === 'ADMIN') {
+                this.router.navigate(['/admin']);
+              } else {
+                this.router.navigate(['/driver']);
+              }
+            },
+            error: () => this.router.navigate(['/trips'])
+          });
         },
-        error: (err) => {
-          console.error('Error detallado:', err);
-          alert('Error al iniciar sesión. Revisa la consola.');
+        error: (err: any) => {
+          console.error('Error en el login', err);
+          alert('Usuario o contraseña incorrectos');
         }
       });
     }

@@ -21,30 +21,49 @@ export class LoginComponent {
   ) {}
 
   login() {
-    // Validamos que no estén vacíos
     if (!this.username || !this.password) {
       alert('Por favor, llena todos los campos');
       return;
     }
 
     this.authService.login({ username: this.username, password: this.password }).subscribe({
-      next: (response) => {
-        // Guardamos el token usando el método de tu servicio
+      next: (response: any) => {
         this.authService.saveToken(response.access_token);
+        console.log('Token obtenido con éxito');
 
-        // Lógica de redirección basada en tu diseño
-        // Nota: Si Laminas no devuelve "role", por ahora usaremos tu lógica de nombre
-        if (this.username === 'gael_Admin' || this.username === 'julian_Admin') {
-          this.router.navigate(['/admin']);
-        } else {
-          this.router.navigate(['/driver']);
-        }
+        // Consultamos el rol dinámicamente
+        this.authService.getEmployeeByUsername(this.username, response.access_token).subscribe({
+          next: (data: any) => {
+            const employees = data._embedded?.employees;
 
-        console.log('Login correcto');
+            if (employees && employees.length > 0) {
+              const currentEmployee = employees.find((e: any) => e.username === this.username);
+
+              if (currentEmployee) {
+                console.log('Rol detectado:', currentEmployee.role);
+
+                // Validación exacta según tu base de datos (ADMIN / DRIVER)
+                if (currentEmployee.role === 'ADMIN') {
+                  this.router.navigate(['/admin']);
+                } else {
+                  this.router.navigate(['/driver']);
+                }
+              } else {
+                alert('Usuario no encontrado en la base de datos de empleados');
+              }
+            } else {
+              alert('No se pudieron recuperar los datos del perfil');
+            }
+          },
+          error: (err: any) => {
+            console.error('Error al obtener datos del empleado:', err);
+            alert('Error al verificar el rol del usuario');
+          }
+        });
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error en el login:', error);
-        alert('Credenciales incorrectas o error de conexión');
+        alert('Usuario o contraseña incorrectos');
       }
     });
   }
