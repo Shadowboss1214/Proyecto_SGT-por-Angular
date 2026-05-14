@@ -11,11 +11,22 @@ return [
                     ],
                 ],
             ],
+            'employees.rpc.register' => [
+                'type' => 'Segment',
+                'options' => [
+                    'route' => '/register',
+                    'defaults' => [
+                        'controller' => 'employees\\V1\\Rpc\\Register\\Controller',
+                        'action' => 'register',
+                    ],
+                ],
+            ],
         ],
     ],
     'api-tools-versioning' => [
         'uri' => [
             0 => 'employees.rest.employees',
+            1 => 'employees.rpc.register',
         ],
     ],
     'api-tools-rest' => [
@@ -47,6 +58,7 @@ return [
     'api-tools-content-negotiation' => [
         'controllers' => [
             'employees\\V1\\Rest\\Employees\\Controller' => 'HalJson',
+            'employees\\V1\\Rpc\\Register\\Controller' => 'Json',
         ],
         'accept_whitelist' => [
             'employees\\V1\\Rest\\Employees\\Controller' => [
@@ -54,9 +66,18 @@ return [
                 1 => 'application/hal+json',
                 2 => 'application/json',
             ],
+            'employees\\V1\\Rpc\\Register\\Controller' => [
+                0 => 'application/vnd.employees.v1+json',
+                1 => 'application/json',
+                2 => 'application/*+json',
+            ],
         ],
         'content_type_whitelist' => [
             'employees\\V1\\Rest\\Employees\\Controller' => [
+                0 => 'application/vnd.employees.v1+json',
+                1 => 'application/json',
+            ],
+            'employees\\V1\\Rpc\\Register\\Controller' => [
                 0 => 'application/vnd.employees.v1+json',
                 1 => 'application/json',
             ],
@@ -147,6 +168,20 @@ return [
                     'DELETE' => true,
                 ],
             ],
+        ],
+    ],
+    'controllers' => [
+        'factories' => [
+            'employees\\V1\\Rpc\\Register\\Controller' => \employees\V1\Rpc\Register\RegisterControllerFactory::class,
+        ],
+    ],
+    'api-tools-rpc' => [
+        'employees\\V1\\Rpc\\Register\\Controller' => [
+            'service_name' => 'register',
+            'http_methods' => [
+                0 => 'POST',
+            ],
+            'route_name' => 'employees.rpc.register',
         ],
     ],
 ];
