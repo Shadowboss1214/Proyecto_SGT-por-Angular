@@ -3,25 +3,25 @@
     <h2 class="logo">Sistema de Gestión de Transportes </h2>
 
     <nav>
-      <a routerLink="/admin/dashboard" routerLinkActive="active">
+      <button (click)="goToDashboard()" >
         Principal
-      </a>
+      </button>
 
-      <a routerLink="/admin/transport" routerLinkActive="active">
+      <button (click)="goToTransport()">
         Transportes
-      </a>
+      </button>
 
-      <a routerLink="/admin/employee" routerLinkActive="active">
+      <button (click)="goToEmployees()">
         Empleados
-      </a>
+      </button>
 
-      <a routerLink="/admin/trips" routerLinkActive="active">
+      <button (click)="goToTrips()">
         Viajes
-      </a>
+      </button>
 
-      <a routerLink="/admin/logistics" routerLinkActive="active">
+      <button (click)="goToLogistic()">
         Logística
-      </a>
+      </button>
       
     </nav>
   </div>

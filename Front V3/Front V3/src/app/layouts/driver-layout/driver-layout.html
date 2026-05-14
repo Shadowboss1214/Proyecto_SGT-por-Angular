@@ -3,13 +3,13 @@
     <h2 class="logo">Sistema de Gestión de Transportes </h2>
 
     <nav>
-      <a routerLink="/driver/dashboard" routerLinkActive="active">
+       <button (click)="goToDashboard()" >
         Principal
-      </a>
+      </button>
 
-      <a routerLink="/driver/trips" routerLinkActive="active">
+      <button (click)="goToTrips()">
         Viajes
-      </a>
+      </button>
 
     </nav>
   </div>

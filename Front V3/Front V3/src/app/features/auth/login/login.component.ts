@@ -26,17 +26,17 @@ export class LoginComponent {
     if (this.loginForm.valid) {
       // Aquí ya tienes los valores extraídos del formulario
       const { username, password } = this.loginForm.value;
-      
+
       // DEBES QUITAR EL 'this.' porque son constantes locales, no propiedades de la clase
       // También agregamos el "!" o aseguramos que no sean nulos para TS
-      this.authService.login({ 
-        username: username!, 
-        password: password! 
+      this.authService.login({
+        username: username!,
+        password: password!
       }).subscribe({
         next: (response: any) => {
           this.authService.saveToken(response.access_token);
           console.log('¡Login exitoso!', response);
-          
+
           // Lógica de redirección por roles (como la teníamos antes)
           this.authService.getEmployeeByUsername(username!, response.access_token).subscribe({
             next: (data: any) => {
@@ -44,12 +44,20 @@ export class LoginComponent {
               const currentEmployee = employees?.find((e: any) => e.username === username);
 
               if (currentEmployee?.role === 'ADMIN') {
-                this.router.navigate(['/admin']);
+                const userRole = 'admin'
+                localStorage.setItem('role', userRole);
+                this.router.navigate(['/admin'],
+                  { skipLocationChange: true }
+                );
               } else {
-                this.router.navigate(['/driver']);
+                const userRole = 'driver';
+                localStorage.setItem('role', userRole);
+                this.router.navigate(['/driver'],
+                  { skipLocationChange: true }
+                );
               }
             },
-            error: () => this.router.navigate(['/trips'])
+            error: () => this.router.navigate(['/login'], { skipLocationChange: true })
           });
         },
         error: (err: any) => {
