@@ -68,6 +68,11 @@ td button:nth-child(3) {
   color: white;
 }
 
+td button.btn-qr {
+  background: #7c3aed;
+  color: white;
+}
+
 td button:hover {
   opacity: 0.9;
 }

@@ -1,0 +1,105 @@
+.qr-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.qr-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+  width: 320px;
+  overflow: hidden;
+}
+
+.qr-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #1e293b;
+  color: white;
+}
+
+.qr-modal__header h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.qr-modal__close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 22px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.qr-modal__body {
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-height: 160px;
+  justify-content: center;
+}
+
+.qr-modal__image {
+  width: 200px;
+  height: 200px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.qr-modal__url {
+  font-size: 11px;
+  color: #64748b;
+  word-break: break-all;
+  text-align: center;
+}
+
+.qr-modal__status {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.qr-modal__status--error {
+  color: #ef4444;
+}
+
+.qr-modal__footer {
+  display: flex;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid #e2e8f0;
+  justify-content: flex-end;
+}
+
+.qr-modal__btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  border: none;
+}
+
+.qr-modal__btn--download {
+  background: #3b82f6;
+  color: white;
+}
+
+.qr-modal__btn--download:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+.qr-modal__btn--close {
+  background: #f1f5f9;
+  color: #1e293b;
+}

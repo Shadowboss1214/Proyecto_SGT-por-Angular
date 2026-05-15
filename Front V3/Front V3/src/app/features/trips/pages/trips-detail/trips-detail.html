@@ -7,6 +7,14 @@
     <p><strong>Ingresos:</strong> {{ trip.income | currency }}</p>
     <p><strong>Costo Combustible:</strong> {{ trip.fuelcost | currency }}</p> <p><strong>Fecha:</strong> {{ trip.date }}</p>
 
+    @if (qrDataUrl) {
+      <div class="qr-section">
+        <h4>Código QR de este viaje</h4>
+        <img [src]="qrDataUrl" alt="QR Viaje {{ trip.id_trip }}" class="qr-image" />
+        <p class="qr-url">http://localhost:8080/trips/{{ trip.id_trip }}</p>
+      </div>
+    }
+
     <div class="actions">
       <button [routerLink]="['edit']">Editar</button>
       <button (click)="delete(trip.id_trip.toString())">Eliminar</button>
