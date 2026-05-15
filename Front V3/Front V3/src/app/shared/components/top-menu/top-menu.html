@@ -1,0 +1,16 @@
+<div class="top-bar">
+  <div class="profile-wrapper">
+    <img
+      class="profile-img"
+      src="https://www.gravatar.com/avatar/?d=mp"
+      alt="Perfil"
+      (click)="toggleMenu()"
+    />
+
+    @if (isMenuOpen()) {
+      <div class="dropdown-menu">
+        <button class="logout-btn" (click)="logout()">Cerrar sesión</button>
+      </div>
+    }
+  </div>
+</div>

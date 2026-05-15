@@ -1,9 +1,10 @@
 import { Component, inject } from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
+import { TopMenu } from '../../shared/components/top-menu/top-menu';
 
 @Component({
   selector: 'app-main-layout',
-  imports: [RouterModule],
+  imports: [RouterModule, TopMenu],
   templateUrl: './admin-layout.html',
   styleUrl: './admin-layout.css',
 })
