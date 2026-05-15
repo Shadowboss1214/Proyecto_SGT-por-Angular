@@ -41,12 +41,12 @@ export class LoginComponent {
 
               if (currentEmployee) {
                 console.log('Rol detectado:', currentEmployee.role);
+                localStorage.setItem('role', currentEmployee.role);
 
-                // Validación exacta según tu base de datos (ADMIN / DRIVER)
                 if (currentEmployee.role === 'ADMIN') {
-                  this.router.navigate(['/admin']);
+                  this.router.navigate(['/app/admin/dashboard']);
                 } else {
-                  this.router.navigate(['/driver']);
+                  this.router.navigate(['/app/driver/dashboard']);
                 }
               } else {
                 alert('Usuario no encontrado en la base de datos de empleados');

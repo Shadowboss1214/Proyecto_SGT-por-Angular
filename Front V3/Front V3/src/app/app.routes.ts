@@ -5,7 +5,8 @@ import { TripsListComponent } from './features/trips/pages/trips-list/trips-list
 import { DashboardComponent } from './features/dashboard/pages/dashboard/dashboard';
 import { AdminLayout } from './layouts/admin-layout/admin-layout';
 import { DriverLayout } from './layouts/driver-layout/driver-layout';
-import { StartPageComponent } from './shared/components/spa-routing/start-routing'
+import { StartPageComponent } from './shared/components/spa-routing/start-routing';
+// import { authGuard } from './core/guards/auth.guard';
 
 
 export const routes: Routes = [
@@ -23,6 +24,7 @@ export const routes: Routes = [
       },
       {
         path: 'admin', component: AdminLayout,
+        // canActivate: [authGuard],
         data: { role: 'admin' },
         children: [
           {
@@ -59,6 +61,7 @@ export const routes: Routes = [
       },
       {
         path: 'driver', component: DriverLayout,
+        // canActivate: [authGuard],
         data: { role: 'driver' },
         children: [
           {

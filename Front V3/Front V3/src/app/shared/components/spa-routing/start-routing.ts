@@ -11,50 +11,22 @@ export class StartPageComponent implements OnInit {
   private router = inject(Router);
 
   ngOnInit(): void {
+    const token = localStorage.getItem('access_token');
 
-    /*const role = localStorage.getItem('role');
-
-    // Si no hay sesión
-    if (!role) {
-
-      this.router.navigate(
-        ['/app/login'],
-        {
-          replaceUrl: true,
-          skipLocationChange: true
-        }
-      );
-
-      return;
-    } 
-    if (role === 'admin') {
-        this.router.navigate(
-      ['/app/admin/dashboard'],
-      {
-        replaceUrl: true,
-        skipLocationChange: true
-      }
-    );
-
+    if (!token) {
+      this.router.navigate(['/app/login'], { replaceUrl: true });
       return;
     }
 
-    this.router.navigate(
-        ['/app/driver/dashboard'],
-        {
-          replaceUrl: true,
-          skipLocationChange: true
-        }
-      );
-      */
-     this.router.navigate(
-        ['/app/admin/dashboard'],
-        {
-          replaceUrl: true,
-          skipLocationChange: true
-        }
-      );
+    const role = localStorage.getItem('role');
 
+    if (role === 'ADMIN') {
+      this.router.navigate(['/app/admin/dashboard'], { replaceUrl: true });
+    } else if (role === 'DRIVER') {
+      this.router.navigate(['/app/driver/dashboard'], { replaceUrl: true });
+    } else {
+      this.router.navigate(['/app/login'], { replaceUrl: true });
+    }
   }
 
 }
