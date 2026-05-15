@@ -1,15 +1,16 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { combineLatest } from 'rxjs';
 import { TripService } from '../../services/trips';
-import { Trip, Route } from '../../models/trips'; // Cambié TripRoute por Route según tu modelo
+import { Trip, Route } from '../../models/trips';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { TableComponent } from '../../../../shared/components/table/table';
 import { Employee } from '../../../employes/models/employee';
 import { Transport } from '../../../transport/models/transport';
+import { TransportService } from '../../../transport/services/transport';
+import { EmployeeService } from '../../../employes/services/employes';
 import { AuthService } from '../../../login';
 import { ReportService } from '../../../../core/services/report.service';
-
-
 
 @Component({
   selector: 'app-Trips-list',
@@ -21,6 +22,8 @@ import { ReportService } from '../../../../core/services/report.service';
 export class TripsListComponent implements OnInit {
 
   private service = inject(TripService);
+  private transportService = inject(TransportService);
+  private employeeService = inject(EmployeeService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
@@ -32,7 +35,13 @@ export class TripsListComponent implements OnInit {
 
   employes: Employee[] = [];
   transport: Transport[] = [];
-  tripRoute: Route[] = []; // Ajustado al nombre del objeto de tu DB
+  tripRoute: Route[] = [
+    { id_route: 1, origin: 'Ciudad de México', destine: 'Guadalajara', distance: 541 },
+    { id_route: 2, origin: 'Guadalajara', destine: 'Monterrey', distance: 742 },
+    { id_route: 3, origin: 'Ciudad de México', destine: 'Monterrey', distance: 921 },
+    { id_route: 4, origin: 'Monterrey', destine: 'Tijuana', distance: 1891 },
+    { id_route: 5, origin: 'Ciudad de México', destine: 'Puebla', distance: 132 },
+  ];
 
   search = '';
   statusFilter = '';
@@ -43,21 +52,28 @@ export class TripsListComponent implements OnInit {
     { label: 'Empleado', field: 'employeeName' },
     { label: 'Ruta', field: 'routeName' },
     { label: 'Ingreso', field: 'income' },
-    { label: 'Costo', field: 'fuelcost' }, // Ajustado a minúscula como en el modelo
+    { label: 'Costo', field: 'fuelcost' },
     { label: 'Fecha', field: 'date' }
   ];
 
   tripsView: any[] = [];
 
   ngOnInit() {
-    this.service.getAll().subscribe(trips => {
+    combineLatest([
+      this.service.getAll(),
+      this.transportService.getAll(),
+      this.employeeService.getAll()
+    ]).subscribe(([trips, transports, employees]) => {
+      this.transport = transports;
+      this.employes = employees;
+
       if (this.role === 'driver') {
         const employeeId = Number(this.authService.getEmployeeId());
         this.Trips = trips.filter(trip => trip.id_employee === employeeId);
       } else {
         this.Trips = trips;
       }
-      
+
       this.tripsView = this.Trips.map(t => ({
         ...t,
         transportName: this.getTransportName(t.id_transport),
@@ -79,7 +95,6 @@ export class TripsListComponent implements OnInit {
     this.service.delete(item.id_trip);
   }
 
-  // Cambiados los parámetros a number para coincidir con la DB
   getTransportName(id: number) {
     return this.transport.find(t => t.id_transport === id)?.name ?? 'N/A';
   }
@@ -111,18 +126,10 @@ export class TripsListComponent implements OnInit {
   }
 
   exportPdf(): void {
-    this.reportService.exportToPdf(
-      this.filtered,
-      this.columns,
-      'Reporte de Viajes'
-    );
+    this.reportService.exportToPdf(this.filtered, this.columns, 'Reporte de Viajes');
   }
 
   exportExcel(): void {
-    this.reportService.exportToExcel(
-      this.filtered,
-      this.columns,
-      'reporte_viajes.xlsx'
-    );
+    this.reportService.exportToExcel(this.filtered, this.columns, 'reporte_viajes.xlsx');
   }
 }
