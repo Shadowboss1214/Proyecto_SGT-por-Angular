@@ -57,7 +57,16 @@ export class TripsForm implements OnInit {
   onSubmit() {
     if (this.form.invalid) return;
 
-    const value: Trip = { id_trip: 0, ...this.form.value };
+    const v = this.form.value;
+    const value: Trip = {
+      id_trip: 0,
+      id_transport: Number(v.id_transport),
+      id_employee: Number(v.id_employee),
+      id_route: Number(v.id_route),
+      income: Number(v.income),
+      fuelcost: Number(v.fuelcost),
+      date: v.date,
+    };
 
     if (this.id) {
       this.tripService.update(this.id, value);
