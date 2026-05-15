@@ -6,7 +6,7 @@ import { DashboardComponent } from './features/dashboard/pages/dashboard/dashboa
 import { AdminLayout } from './layouts/admin-layout/admin-layout';
 import { DriverLayout } from './layouts/driver-layout/driver-layout';
 import { StartPageComponent } from './shared/components/spa-routing/start-routing';
-// import { authGuard } from './core/guards/auth.guard';
+import { authGuard } from './core/guards/auth.guard';
 
 
 export const routes: Routes = [
@@ -24,7 +24,7 @@ export const routes: Routes = [
       },
       {
         path: 'admin', component: AdminLayout,
-        // canActivate: [authGuard],
+        canActivate: [authGuard],
         data: { role: 'admin' },
         children: [
           {
@@ -61,7 +61,7 @@ export const routes: Routes = [
       },
       {
         path: 'driver', component: DriverLayout,
-        // canActivate: [authGuard],
+        canActivate: [authGuard],
         data: { role: 'driver' },
         children: [
           {
