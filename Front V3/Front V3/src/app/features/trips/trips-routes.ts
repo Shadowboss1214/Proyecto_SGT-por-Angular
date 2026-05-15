@@ -8,19 +8,19 @@ export const TRIPS_ROUTES: Routes = [
         .then(m => m.TripsListComponent)
   },
   {
-    path: ':id',
+    path: 'new',
     loadComponent: () =>
       import('./pages/trips-detail/trips-detail')
         .then(m => m.TripsDetailComponent)
   },
   {
-  path: 'new',
-  loadComponent: () =>
-    import('./pages/trips-detail/trips-detail')
-      .then(m => m.TripsDetailComponent)
-},
-{
     path: ':id/edit',
+    loadComponent: () =>
+      import('./pages/trips-detail/trips-detail')
+        .then(m => m.TripsDetailComponent)
+  },
+  {
+    path: ':id',
     loadComponent: () =>
       import('./pages/trips-detail/trips-detail')
         .then(m => m.TripsDetailComponent)

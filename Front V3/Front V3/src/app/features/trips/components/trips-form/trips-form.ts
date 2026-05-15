@@ -1,28 +1,40 @@
 import { Component, OnInit, inject, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angular/forms'; // <-- IMPORTANTE
+import { ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { Route, Trip } from '../../models/trips';
 import { Employee } from '../../../employes/models/employee';
 import { Transport } from '../../../transport/models/transport';
+import { TripService } from '../../services/trips';
+import { TransportService } from '../../../transport/services/transport';
+import { EmployeeService } from '../../../employes/services/employes';
 
 @Component({
   selector: 'app-trips-form',
   standalone: true,
-  // Agrega ReactiveFormsModule aquí para que reconozca [formGroup]
-  imports: [CommonModule, ReactiveFormsModule], 
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './trips-form.html',
   styleUrl: './trips-form.css'
 })
 export class TripsForm implements OnInit {
   private fb = inject(FormBuilder);
+  private tripService = inject(TripService);
+  private transportService = inject(TransportService);
+  private employeeService = inject(EmployeeService);
+  private router = inject(Router);
 
   @Input() data?: Trip;
   @Input() id?: number;
 
-  // Declarar las variables que usa el HTML
   transport: Transport[] = [];
   employes: Employee[] = [];
-  tripRoute: Route[] = []; // <-- Este faltaba (Error TS2339)
+  tripRoute: Route[] = [
+    { id_route: 1, origin: 'Ciudad de México', destine: 'Guadalajara', distance: 541 },
+    { id_route: 2, origin: 'Guadalajara', destine: 'Monterrey', distance: 742 },
+    { id_route: 3, origin: 'Ciudad de México', destine: 'Monterrey', distance: 921 },
+    { id_route: 4, origin: 'Monterrey', destine: 'Tijuana', distance: 1891 },
+    { id_route: 5, origin: 'Ciudad de México', destine: 'Puebla', distance: 132 },
+  ];
 
   form: FormGroup = this.fb.group({
     id_transport: [null, Validators.required],
@@ -34,16 +46,25 @@ export class TripsForm implements OnInit {
   });
 
   ngOnInit() {
+    this.transportService.getAll().subscribe(data => this.transport = data);
+    this.employeeService.getAll().subscribe(data => this.employes = data);
+
     if (this.data) {
       this.form.patchValue(this.data);
     }
   }
 
-  // Cambiamos el nombre para que coincida con el (ngSubmit)="onSubmit()"
   onSubmit() {
-    if (this.form.valid) {
-      console.log('Datos del viaje:', this.form.value);
-      // Aquí llamarías a tu servicio para guardar
+    if (this.form.invalid) return;
+
+    const value: Trip = { id_trip: 0, ...this.form.value };
+
+    if (this.id) {
+      this.tripService.update(this.id, value);
+    } else {
+      this.tripService.create(value);
     }
+
+    this.router.navigate(['/trips']);
   }
 }
