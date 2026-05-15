@@ -15,10 +15,15 @@
     </button>
 </div>
 
-<app-table 
+<app-table
   [data]="filtered"
   [columns]="columns"
   (view)="onView($event)"
   (edit)="onEdit($event)"
-  (delete)="onDelete($event)">
+  (delete)="onDelete($event)"
+  (qr)="onQr($event)">
 </app-table>
+
+@if (showQrModal && selectedTrip) {
+  <app-qr-modal [trip]="selectedTrip" (close)="onQrClose()"></app-qr-modal>
+}

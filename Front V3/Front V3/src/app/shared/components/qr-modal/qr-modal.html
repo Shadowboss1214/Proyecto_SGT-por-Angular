@@ -1,0 +1,34 @@
+<div class="qr-overlay" (click)="onOverlayClick($event)">
+  <div class="qr-modal">
+    <div class="qr-modal__header">
+      <h3>Código QR — Viaje #{{ trip?.id_trip }}</h3>
+      <button class="qr-modal__close" (click)="onClose()">×</button>
+    </div>
+
+    <div class="qr-modal__body">
+      @if (loading) {
+        <p class="qr-modal__status">Generando código QR...</p>
+      }
+      @if (error) {
+        <p class="qr-modal__status qr-modal__status--error">
+          Error al generar el QR. Intente de nuevo.
+        </p>
+      }
+      @if (qrDataUrl && !loading) {
+        <img [src]="qrDataUrl" alt="QR Viaje {{ trip?.id_trip }}" class="qr-modal__image" />
+        <p class="qr-modal__url">http://localhost:8080/trips/{{ trip?.id_trip }}</p>
+      }
+    </div>
+
+    <div class="qr-modal__footer">
+      <button class="qr-modal__btn qr-modal__btn--download"
+              (click)="download()"
+              [disabled]="!qrDataUrl || loading">
+        Descargar PNG
+      </button>
+      <button class="qr-modal__btn qr-modal__btn--close" (click)="onClose()">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>

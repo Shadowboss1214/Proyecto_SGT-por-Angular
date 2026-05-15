@@ -11,11 +11,12 @@ import { TransportService } from '../../../transport/services/transport';
 import { EmployeeService } from '../../../employes/services/employes';
 import { AuthService } from '../../../login';
 import { ReportService } from '../../../../core/services/report.service';
+import { QrModalComponent } from '../../../../shared/components/qr-modal/qr-modal';
 
 @Component({
   selector: 'app-Trips-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, TableComponent],
+  imports: [CommonModule, RouterModule, TableComponent, QrModalComponent],
   templateUrl: './trips-list.html',
   styleUrl: './trips-list.css'
 })
@@ -131,5 +132,18 @@ export class TripsListComponent implements OnInit {
 
   exportExcel(): void {
     this.reportService.exportToExcel(this.filtered, this.columns, 'reporte_viajes.xlsx');
+  }
+
+  showQrModal = false;
+  selectedTrip: any = null;
+
+  onQr(item: any) {
+    this.selectedTrip = item;
+    this.showQrModal = true;
+  }
+
+  onQrClose() {
+    this.showQrModal = false;
+    this.selectedTrip = null;
   }
 }

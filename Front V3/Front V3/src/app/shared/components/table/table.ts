@@ -16,6 +16,7 @@ export class TableComponent {
   @Output() view = new EventEmitter<any>();
   @Output() edit = new EventEmitter<any>();
   @Output() delete = new EventEmitter<any>();
+  @Output() qr = new EventEmitter<any>();
 
 }
 
