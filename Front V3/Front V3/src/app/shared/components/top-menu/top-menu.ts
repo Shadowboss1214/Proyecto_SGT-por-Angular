@@ -29,6 +29,6 @@ export class TopMenu {
 
   logout() {
     this.authService.logout();
-    this.router.navigate(['/app/login']);
+    this.router.navigate(['/app/login'], { skipLocationChange: true});
   }
 }

@@ -46,13 +46,13 @@ export class LoginComponent {
               if (currentEmployee?.role === 'ADMIN') {
                 const userRole = 'admin'
                 localStorage.setItem('role', userRole);
-                this.router.navigate(['/admin'],
+                this.router.navigate([''],
                   { skipLocationChange: true }
                 );
               } else {
                 const userRole = 'driver';
                 localStorage.setItem('role', userRole);
-                this.router.navigate(['/driver'],
+                this.router.navigate([''],
                   { skipLocationChange: true }
                 );
               }

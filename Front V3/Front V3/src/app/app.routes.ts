@@ -12,7 +12,7 @@ import { authGuard } from './core/guards/auth.guard';
 export const routes: Routes = [
 
   {
-    path: '',
+    path: 'Bus.inc.com',
     loadComponent: () => import('./shared/components/spa-routing/start-routing').then(c => c.StartPageComponent)
   },
   {

@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-start-page',
@@ -18,6 +18,7 @@ export class StartPageComponent implements OnInit {
       return;
     }
 
+    
     const role = localStorage.getItem('role');
 
     if (role === 'ADMIN') {
