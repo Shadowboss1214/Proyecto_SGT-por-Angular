@@ -15,12 +15,12 @@
 </div>
 }
 
-@if(isEdit && employee){
+@if(isEdit){
     <h2>{{employee ? 'Editar Empleado':'Nuevo Empleado'}}</h2>
 <div class="container">
-    <app-Employee-form 
+    <app-Employee-form
         [data]="employee"
-        [id]="employee.id_employee.toString()">
+        [id]="employee?.id_employee?.toString()">
     </app-Employee-form>
 </div>
 }

@@ -8,19 +8,19 @@ export const EMPLOYEE_ROUTES: Routes = [
         .then(m => m.EmployeeListComponent)
   },
   {
-    path: ':id',
+    path: 'new',
     loadComponent: () =>
       import('./pages/employee-detail/employee-detail')
         .then(m => m.EmployeeDetailComponent)
   },
   {
-  path: 'new',
-  loadComponent: () =>
-    import('./pages/employee-detail/employee-detail')
-      .then(m => m.EmployeeDetailComponent)
-},
-{
     path: ':id/edit',
+    loadComponent: () =>
+      import('./pages/employee-detail/employee-detail')
+        .then(m => m.EmployeeDetailComponent)
+  },
+  {
+    path: ':id',
     loadComponent: () =>
       import('./pages/employee-detail/employee-detail')
         .then(m => m.EmployeeDetailComponent)
