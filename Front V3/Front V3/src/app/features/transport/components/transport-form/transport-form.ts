@@ -35,21 +35,39 @@ export class TransportFormComponent implements OnInit {
       fuelConsumption: ['', [Validators.required, Validators.pattern("^[0-9]*$")]]
     });
     if (this.data) {
-    this.form.patchValue(this.data);
-  }
-  }
-
- submit() {
-  if (this.form.invalid) return;
-
-  const value = this.form.value as Transport;
-
-  if (this.id) {
-    this.service.update(+this.id, value);
-  } else {
-    this.service.create(value);
+      this.form.patchValue({
+        name: this.data.name,
+        type: this.data.type,
+        plate: this.data.plate,
+        status: this.data.status,
+        costPerKm: this.data.costperkm,
+        maintenanceCost: this.data.maintenancecost,
+        fuelConsumption: this.data.fuelconsumption,
+      });
+    }
   }
 
-  this.router.navigate(['/transport']);
-}
+  submit() {
+    if (this.form.invalid) return;
+
+    const v = this.form.value;
+    const value: Transport = {
+      id_transport: 0,
+      name: v.name,
+      type: v.type,
+      plate: v.plate,
+      status: v.status,
+      costperkm: v.costPerKm,
+      maintenancecost: v.maintenanceCost,
+      fuelconsumption: v.fuelConsumption,
+    };
+
+    if (this.id) {
+      this.service.update(+this.id, value);
+    } else {
+      this.service.create(value);
+    }
+
+    this.router.navigate(['/transport']);
+  }
 }

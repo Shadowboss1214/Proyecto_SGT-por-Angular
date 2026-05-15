@@ -8,19 +8,19 @@ export const TRANSPORT_ROUTES: Routes = [
         .then(m => m.TransportListComponent)
   },
   {
-    path: ':id',
+    path: 'new',
     loadComponent: () =>
       import('./pages/transport-detail/transport-detail')
         .then(m => m.TransportDetailComponent)
   },
   {
-  path: 'new',
-  loadComponent: () =>
-    import('./pages/transport-detail/transport-detail')
-      .then(m => m.TransportDetailComponent)
-},
-{
     path: ':id/edit',
+    loadComponent: () =>
+      import('./pages/transport-detail/transport-detail')
+        .then(m => m.TransportDetailComponent)
+  },
+  {
+    path: ':id',
     loadComponent: () =>
       import('./pages/transport-detail/transport-detail')
         .then(m => m.TransportDetailComponent)

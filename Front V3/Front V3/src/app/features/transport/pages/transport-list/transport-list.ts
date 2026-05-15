@@ -33,15 +33,15 @@ export class TransportListComponent implements OnInit {
   ];
 
   onView(item: Transport) {
-    this.router.navigate(['/transport', (item as any).id]);
+    this.router.navigate(['/transport', item.id_transport]);
   }
 
   onEdit(item: Transport) {
-    this.router.navigate(['/transport', (item as any).id, 'edit']);
+    this.router.navigate(['/transport', item.id_transport, 'edit']);
   }
 
   onDelete(item: Transport) {
-    this.service.delete((item as any).id);
+    this.service.delete(item.id_transport);
   }
 
   get filtered(): Transport[] {

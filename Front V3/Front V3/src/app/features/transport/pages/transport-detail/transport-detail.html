@@ -11,7 +11,7 @@
 
     <div class="actions">
         <button [routerLink]="['edit']">Editar</button>
-        <button (click)="delete($any(transport).id)">Eliminar</button>
+        <button (click)="delete(transport.id_transport.toString())">Eliminar</button>
     </div>
 </div>
 }
@@ -19,9 +19,9 @@
 @if(isEdit){
     <h2>{{transport ? 'Editar Transporte':'Nuevo Transporte'}}</h2>
 <div class="container">
-    <app-transport-form 
+    <app-transport-form
         [data]="transport"
-        [id]="$any(transport)?.id">
+        [id]="transport?.id_transport?.toString()">
     </app-transport-form>
 </div>
 }
