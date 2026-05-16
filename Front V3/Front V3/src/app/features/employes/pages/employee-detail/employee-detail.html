@@ -4,9 +4,6 @@
     <p><strong>Nombre:</strong> {{ employee.name }}</p>
     <p><strong>Salario:</strong> {{ employee.salary }}</p>
     
-    @if(employee.position) {
-        <p><strong>Posición:</strong> {{ employee.position }}</p>
-    }
 
     <div class="actions">
         <button [routerLink]="['edit']">Editar</button>

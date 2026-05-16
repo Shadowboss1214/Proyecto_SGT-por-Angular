@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { EmployeeService } from '../../services/employes';
 import { Employee } from '../../models/employee';
 import { CommonModule } from '@angular/common';
+import { NavigationService } from '../../../../core/services/nav.service';
 import { EmployeeFormComponent } from '../../components/employee-form/employee-form'; 
 
 @Component({
@@ -18,7 +19,7 @@ export class EmployeeDetailComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private router: Router,
+    private router: NavigationService,
     private service: EmployeeService
   ) { }
 

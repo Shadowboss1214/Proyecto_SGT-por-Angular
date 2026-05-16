@@ -1,5 +1,5 @@
 import { Component, ElementRef, HostListener, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { NavigationService } from '../../../core/services/nav.service';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -10,7 +10,7 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class TopMenu {
   private authService = inject(AuthService);
-  private router = inject(Router);
+  private router = inject(NavigationService);
   private elementRef = inject(ElementRef);
 
   isMenuOpen = signal(false);
@@ -29,6 +29,7 @@ export class TopMenu {
 
   logout() {
     this.authService.logout();
-    this.router.navigate(['/app/login']);
+    localStorage.removeItem('role')
+    this.router.navigate(['/login']);
   }
 }

@@ -3,7 +3,7 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Employee } from '../../models/employee';
 import { Component, Input, OnInit } from '@angular/core';
 import { EmployeeService } from '../../services/employes';
-import { Router } from '@angular/router';
+import { NavigationService } from '../../../../core/services/nav.service';
 import { Validators } from '@angular/forms';
 
 @Component({
@@ -18,7 +18,7 @@ export class EmployeeFormComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private service: EmployeeService,
-    private router: Router) { }
+    private router: NavigationService) { }
 
   form!: any;
   @Input() data?: Employee;

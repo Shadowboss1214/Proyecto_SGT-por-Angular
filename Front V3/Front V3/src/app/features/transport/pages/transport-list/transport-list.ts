@@ -2,7 +2,8 @@ import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TransportService } from '../../services/transport';
 import { Transport } from '../../models/transport';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
+import { NavigationService } from '../../../../core/services/nav.service';
 import { TableComponent } from '../../../../shared/components/table/table';
 
 @Component({
@@ -15,7 +16,7 @@ import { TableComponent } from '../../../../shared/components/table/table';
 export class TransportListComponent implements OnInit {
 
   private service = inject(TransportService);
-  private router = inject(Router);
+  private router = inject(NavigationService);
   private transportService = inject(TransportService);
   private cdr = inject(ChangeDetectorRef);
   

@@ -2,7 +2,8 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { EmployeeService } from '../../services/employes';
 import { Employee } from '../../models/employee';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
+import { NavigationService } from '../../../../core/services/nav.service';
 import {TableComponent} from '../../../../shared/components/table/table';
 import { ReportService } from '../../../../core/services/report.service';
 
@@ -17,7 +18,7 @@ import { ReportService } from '../../../../core/services/report.service';
 export class EmployeeListComponent implements OnInit {
 
   private service = inject(EmployeeService);
-  private router = inject(Router);
+  private router = inject(NavigationService);
   private reportService = inject(ReportService);
 
   search = '';

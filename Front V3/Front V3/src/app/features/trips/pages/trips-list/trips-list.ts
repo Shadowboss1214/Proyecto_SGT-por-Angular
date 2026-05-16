@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { combineLatest } from 'rxjs';
 import { TripService } from '../../services/trips';
 import { Trip, Route } from '../../models/trips';
-import { RouterModule, Router, ActivatedRoute } from '@angular/router';
+import { RouterModule, ActivatedRoute } from '@angular/router';
 import { TableComponent } from '../../../../shared/components/table/table';
 import { Employee } from '../../../employes/models/employee';
 import { Transport } from '../../../transport/models/transport';
@@ -12,7 +12,7 @@ import { EmployeeService } from '../../../employes/services/employes';
 import { AuthService } from '../../../login';
 import { ReportService } from '../../../../core/services/report.service';
 import { QrModalComponent } from '../../../../shared/components/qr-modal/qr-modal';
-
+import { NavigationService } from '../../../../core/services/nav.service';
 @Component({
   selector: 'app-Trips-list',
   standalone: true,
@@ -25,7 +25,7 @@ export class TripsListComponent implements OnInit {
   private service = inject(TripService);
   private transportService = inject(TransportService);
   private employeeService = inject(EmployeeService);
-  private router = inject(Router);
+  private router = inject(NavigationService);
   private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
   private reportService = inject(ReportService);
