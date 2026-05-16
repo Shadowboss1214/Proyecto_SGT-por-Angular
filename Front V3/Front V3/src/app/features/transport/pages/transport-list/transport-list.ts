@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TransportService } from '../../services/transport';
 import { Transport } from '../../models/transport';
@@ -16,7 +16,10 @@ export class TransportListComponent implements OnInit {
 
   private service = inject(TransportService);
   private router = inject(Router);
-
+  private transportService = inject(TransportService);
+  private cdr = inject(ChangeDetectorRef);
+  
+  transport: Transport[] = [];
   search = '';
   statusFilter = '';
   transports: Transport[] = [];
@@ -27,9 +30,9 @@ export class TransportListComponent implements OnInit {
     { label: 'Tipo', field: 'type' },
     { label: 'Placa', field: 'plate' },
     { label: 'Estado', field: 'status' },
-    { label: 'Costo por Km', field: 'costPerKm' },
-    { label: 'Costo de mantenimiento', field: 'maintenanceCost' },
-    { label: 'Consumo de conbustible', field: 'fuelConsumption' }
+    { label: 'Costo por Km', field: 'costperkm' },
+    { label: 'Costo de mantenimiento', field: 'maintenancecost' },
+    { label: 'Consumo de conbustible', field: 'fuelconsumption' }
   ];
 
   onView(item: Transport) {
@@ -67,8 +70,20 @@ export class TransportListComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.service.getAll().subscribe(data => {
-      this.transports = data;
+    this.loadTransports();
+  }
+
+  loadTransports() {
+    this.transportService.getLatestTransports().subscribe({
+      next: (data) => {
+        this.transports = data;
+        console.log('Transportes cargados en el Front:', this.transports);
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error al mapear la API de transportes:', err);
+      }
     });
   }
+
 }

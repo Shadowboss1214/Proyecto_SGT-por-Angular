@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Transport } from '../models/transport';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { map } from 'rxjs/operators';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -8,6 +11,17 @@ import { Transport } from '../models/transport';
 export class TransportService {
 
   private data: Transport[] = [];
+  private apiUrl = 'http://localhost:8080/transport';
+
+  constructor(private http: HttpClient, private authService: AuthService) {}
+
+  private getHeaders(): HttpHeaders {
+    const token = this.authService.getToken();
+    return new HttpHeaders({
+      'Authorization': `Bearer ${this.authService.getToken()}`,
+      'Content-Type': 'application/json'
+    });
+  }
 
   private dataSubject = new BehaviorSubject<Transport[]>(this.data);
   data$: Observable<Transport[]> = this.dataSubject.asObservable();
@@ -52,4 +66,18 @@ export class TransportService {
   private refresh(): void {
     this.dataSubject.next([...this.data]);
   }
+
+  getLatestTransports(): Observable<Transport[]> {
+    return this.http.get<any>(this.apiUrl, { headers: this.getHeaders() }).pipe(
+      map(response => {
+        // Accedemos a la estructura HAL JSON que te devolvió Postman
+        const list = response._embedded?.transport || [];
+        
+        // Opcional: Como en el backend limitamos a 20 pero vienen por ID ascendente,
+        // con .reverse() hacemos que los más nuevos aparezcan arriba en tu tabla.
+        return [...list].reverse();
+      })
+    );
+  }
+
 }

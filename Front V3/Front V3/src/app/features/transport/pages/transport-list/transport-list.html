@@ -14,8 +14,8 @@
 </div>
 
 <app-table 
+  [columns]="columns" 
   [data]="filtered"
-  [columns]="columns"
   (view)="onView($event)"
   (edit)="onEdit($event)"
   (delete)="onDelete($event)">
