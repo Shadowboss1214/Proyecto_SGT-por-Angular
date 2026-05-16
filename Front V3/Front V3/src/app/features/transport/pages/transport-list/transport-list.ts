@@ -5,6 +5,7 @@ import { Transport } from '../../models/transport';
 import { RouterModule } from '@angular/router';
 import { NavigationService } from '../../../../core/services/nav.service';
 import { TableComponent } from '../../../../shared/components/table/table';
+import { ReportService } from '../../../../core/services/report.service';
 
 @Component({
   selector: 'app-transport-list',
@@ -19,6 +20,7 @@ export class TransportListComponent implements OnInit {
   private router = inject(NavigationService);
   private transportService = inject(TransportService);
   private cdr = inject(ChangeDetectorRef);
+  private reportService = inject(ReportService);
   
   transport: Transport[] = [];
   search = '';
@@ -75,6 +77,14 @@ export class TransportListComponent implements OnInit {
 
   ngOnInit() {
     this.loadTransports();
+  }
+
+  exportPdf(): void {
+    this.reportService.exportToPdf(this.filtered, this.columns, 'Reporte de Transportes');
+  }
+
+  exportExcel(): void {
+    this.reportService.exportToExcel(this.filtered, this.columns, 'reporte_transportes');
   }
 
   loadTransports() {
