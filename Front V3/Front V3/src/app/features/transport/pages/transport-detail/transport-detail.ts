@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { TransportService } from '../../services/transport';
 import { Transport } from '../../models/transport';
 import { CommonModule } from '@angular/common';
+import { NavigationService } from '../../../../core/services/nav.service';
 import { TransportFormComponent } from '../../components/transport-form/transport-form';
 
 @Component({
@@ -19,7 +20,7 @@ export class TransportDetailComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private router: Router,
+    private router: NavigationService,
     private service: TransportService
   ) {}
 

@@ -43,14 +43,15 @@ export class TransportService {
   }
 
   update(id: number, transportData: Transport): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/${id}`, transportData, { headers: this.getHeaders() }).pipe(
+    const { id_transport, ...payload } = transportData;
+    return this.http.patch<any>(`${this.apiUrl}/${id}`, payload, { headers: this.getHeaders() }).pipe(
       tap(() => { this.invalidate(); this.getLatestTransports().subscribe(); })
     );
   }
 
   delete(id: number): Observable<any> {
     return this.http.delete<any>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() }).pipe(
-      tap(() => { this.invalidate(); this.getLatestTransports().subscribe(); })
+      tap(() => { this.invalidate(); this.getLatestTransports().subscribe();  })
     );
   }
 
