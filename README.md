@@ -25,6 +25,11 @@ Aplicación web full-stack para la gestión administrativa de transportes, desar
 | Laminas API Tools OAuth2| ^1.9                 |
 | PostgreSQL (Supabase)   | -                    |
 
+### Base de datos
+| Tecnología | Detalle |
+|---|---|
+| PostgreSQL | Hosteado en Supabase |
+
 ---
 
 ## Especificación 1 — Aplicación web con esquema MVC
@@ -467,3 +472,191 @@ erDiagram
   transport ||--o{ trip : "id_transport"
   route ||--o{ trip : "id_route"
 ```
+
+---
+
+## Requisitos previos
+
+- **Node.js** >= 18 y **npm** >= 10
+- **PHP** >= 8.1 con extensiones: `pdo`, `pdo_pgsql`, `mbstring`, `json`
+- **Composer** (gestor de paquetes PHP)
+- Acceso a la base de datos en **Supabase** (credenciales en `config/autoload/`)
+
+---
+
+## Estructura de carpetas
+
+```
+Proyecto_SGT-por-Angular/
+├── Front V3/
+│   └── Front V3/                        # Aplicación Angular
+│       ├── src/
+│       │   └── app/
+│       │       ├── core/                # Lógica central reutilizable
+│       │       │   ├── guards/          # auth.guard.ts — protección de rutas
+│       │       │   ├── interceptors/    # auth.interceptor.ts — adjunta el token JWT
+│       │       │   └── services/        # auth, nav, qr, report services
+│       │       └── features/            # Módulos funcionales por dominio
+│       │           ├── auth/            # Login (flujo OAuth2)
+│       │           ├── dashboard/       # Página principal con métricas
+│       │           ├── employes/        # CRUD de empleados
+│       │           │   ├── components/  # employee-form
+│       │           │   ├── models/      # employee.ts
+│       │           │   ├── pages/       # employes-list, employee-detail
+│       │           │   └── services/    # employes.ts
+│       │           ├── transport/       # CRUD de vehículos
+│       │           │   ├── components/  # transport-form
+│       │           │   ├── models/      # transport.ts
+│       │           │   ├── pages/       # transport-list, transport-detail
+│       │           │   └── services/    # transport.ts
+│       │           ├── trips/           # CRUD de viajes
+│       │           │   ├── components/  # trips-form
+│       │           │   ├── models/      # trips.ts
+│       │           │   ├── pages/       # trips-list, trips-detail
+│       │           │   └── services/    # trips.ts
+│       │           └── logistics/       # Dashboard logístico
+│       │               ├── models/      # logistics.ts
+│       │               ├── pages/       # logistics-dashboard
+│       │               └── services/    # logistics.ts
+│       ├── angular.json
+│       ├── package.json
+│       └── tsconfig.json
+│
+└── backend/
+    └── sgt-backend/                     # API REST con Laminas API Tools
+        ├── config/
+        │   └── autoload/                # Configuración de DB, OAuth2, CORS
+        ├── module/
+        │   ├── Application/             # Módulo base de Laminas MVC
+        │   └── employees/               # Módulo principal del negocio
+        │       └── src/V1/
+        │           ├── Rest/
+        │           │   ├── Employees/   # Recurso REST de empleados
+        │           │   ├── Transport/   # Recurso REST de transporte
+        │           │   └── Trips/       # Recurso REST de viajes
+        │           └── Rpc/
+        │               ├── Register/    # Endpoint de registro de usuarios
+        │               └── Logistics/   # Endpoint de reportes logísticos
+        ├── public/
+        │   └── index.php                # Punto de entrada del backend
+        └── vendor/                      # Dependencias PHP (Composer)
+```
+
+---
+
+## Instrucciones de instalación
+
+### 1. Clonar el repositorio
+
+```bash
+git clone https://github.com/Shadowboss1214/Proyecto_SGT-por-Angular.git
+cd Proyecto_SGT-por-Angular
+```
+
+---
+
+### 2. Instalar el Frontend (Angular)
+
+```bash
+cd "Front V3/Front V3"
+npm install
+npm install qrcode
+npm install --save-dev @types/qrcode
+```
+
+Levantar el servidor de desarrollo:
+
+```bash
+ng serve
+```
+
+La aplicación estará disponible en `http://localhost:4200`
+
+---
+
+### 3. Instalar el Backend (Laminas)
+
+```bash
+cd backend/sgt-backend
+composer install
+```
+
+Levantar el servidor PHP:
+
+```bash
+php -S localhost:8080 -t public
+```
+
+La API estará disponible en `http://localhost:8080`
+
+> **Nota:** El frontend hace peticiones al backend en `http://localhost:8080`. Asegúrate de que ambos estén corriendo al mismo tiempo.
+
+---
+
+### 4. Configurar la base de datos
+
+Las credenciales de conexión a Supabase se encuentran en:
+
+```
+backend/sgt-backend/config/autoload/
+```
+
+Este directorio **no se sube a GitHub** por seguridad (está en `.gitignore`). Cada integrante del equipo debe configurar sus propias credenciales localmente.
+
+---
+
+## Endpoints del API
+
+Base URL: `http://localhost:8080`
+
+Todos los endpoints (excepto `/register`) requieren el header:
+```
+Authorization: Bearer <token>
+```
+
+### Autenticación
+
+| Método | Endpoint | Descripción |
+|---|---|---|
+| `POST` | `/oauth` | Obtener token de acceso (OAuth2) |
+| `POST` | `/register` | Registrar nuevo usuario |
+
+### Empleados
+
+| Método | Endpoint | Descripción |
+|---|---|---|
+| `GET` | `/employees` | Listar todos los empleados |
+| `GET` | `/employees/:employee_id` | Obtener un empleado por ID |
+| `POST` | `/employees` | Crear un nuevo empleado |
+| `PUT` | `/employees/:employee_id` | Actualizar un empleado |
+| `DELETE` | `/employees/:employee_id` | Eliminar un empleado |
+
+### Transporte
+
+| Método | Endpoint | Descripción |
+|---|---|---|
+| `GET` | `/transport` | Listar todos los vehículos |
+| `GET` | `/transport/:transport_id` | Obtener un vehículo por ID |
+| `POST` | `/transport` | Registrar un nuevo vehículo |
+| `PUT` | `/transport/:transport_id` | Actualizar un vehículo |
+| `DELETE` | `/transport/:transport_id` | Eliminar un vehículo |
+
+### Viajes
+
+| Método | Endpoint | Descripción |
+|---|---|---|
+| `GET` | `/trips` | Listar todos los viajes |
+| `GET` | `/trips/:id_trip` | Obtener un viaje por ID |
+| `POST` | `/trips` | Registrar un nuevo viaje |
+| `PUT` | `/trips/:id_trip` | Actualizar un viaje |
+| `DELETE` | `/trips/:id_trip` | Eliminar un viaje |
+
+### Logística
+
+| Método | Endpoint | Descripción |
+|---|---|---|
+| `GET` | `/logistics` | Obtener datos del dashboard logístico |
+
+---
+
+
