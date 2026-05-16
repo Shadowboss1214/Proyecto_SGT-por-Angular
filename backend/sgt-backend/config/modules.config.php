@@ -31,5 +31,4 @@ return [
     'Laminas\\ZendFrameworkBridge',
     'Application',
     'employees',
-    'Ingreso_Camiones',
 ];
