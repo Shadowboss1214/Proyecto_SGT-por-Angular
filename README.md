@@ -375,3 +375,95 @@ También consume `QrService` directamente (líneas 41–43) para mostrar el QR d
 6. `QrService` importa dinámicamente `qrcode`, construye la URL `http://localhost:8080/trips/{id}` y devuelve el Data URL del QR.
 7. El modal muestra el QR como imagen y ofrece descargarlo como PNG.
 8. En la vista de detalle del viaje, el QR se genera automáticamente al cargar la página.
+
+
+# Diagrama de base de datos alojada en supabase
+
+```mermaid
+erDiagram
+  oauth_users {
+    varchar username PK
+    varchar password
+    varchar first_name
+    varchar last_name
+    varchar email
+    boolean email_verified
+    varchar scope
+  }
+  oauth_clients {
+    varchar client_id PK
+    varchar client_secret
+    varchar redirect_uri
+    varchar grant_types
+    varchar scope
+    varchar user_id
+  }
+  oauth_access_tokens {
+    varchar access_token PK
+    varchar client_id
+    varchar user_id
+    timestamp expires
+    varchar scope
+  }
+  oauth_authorization_codes {
+    varchar authorization_code PK
+    varchar client_id
+    varchar user_id
+    varchar redirect_uri
+    timestamp expires
+    varchar scope
+  }
+  oauth_refresh_tokens {
+    varchar refresh_token PK
+    varchar client_id
+    varchar user_id
+    timestamp expires
+    varchar scope
+  }
+  oauth_jwt {
+    varchar client_id
+    varchar subject
+    varchar public_key
+  }
+  oauth_scopes {
+    varchar scope PK
+    boolean is_default
+  }
+  employees {
+    int id_employee PK
+    varchar name
+    numeric salary
+    text role
+    varchar username FK
+  }
+  transport {
+    int id_transport PK
+    varchar name
+    varchar type
+    varchar plate
+    varchar status
+    numeric costperkm
+    numeric maintenancecost
+    numeric fuelconsumption
+  }
+  route {
+    int id_route PK
+    varchar origin
+    varchar destine
+    numeric distance
+  }
+  trip {
+    int id_trip PK
+    int id_transport FK
+    int id_employee FK
+    int id_route FK
+    numeric income
+    numeric fuelcost
+    date date
+  }
+
+  oauth_users ||--o{ employees : "username"
+  employees ||--o{ trip : "id_employee"
+  transport ||--o{ trip : "id_transport"
+  route ||--o{ trip : "id_route"
+```
