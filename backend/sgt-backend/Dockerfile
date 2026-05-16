@@ -20,6 +20,9 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-intl
 
+# Crear carpeta de caché y dar permisos de escritura
+RUN mkdir -p data/cache && chmod -R 777 data/cache
+
 EXPOSE 8080
 
 CMD ["php", "-S", "0.0.0.0:8080", "-t", "public"]
