@@ -24,7 +24,7 @@ return [
             'employees.rest.transport' => [
                 'type' => 'Segment',
                 'options' => [
-                    'route' => '/transport[/:transport_id]',
+                    'route' => '/transport[/:id_transport]',
                     'defaults' => [
                         'controller' => 'employees\\V1\\Rest\\Transport\\Controller',
                     ],
@@ -50,6 +50,7 @@ return [
                 1 => 'PATCH',
                 2 => 'PUT',
                 3 => 'DELETE',
+                4 => 'POST',
             ],
             'collection_http_methods' => [
                 0 => 'GET',
@@ -65,18 +66,19 @@ return [
             'service_name' => 'employees',
         ],
         'employees\\V1\\Rest\\Transport\\Controller' => [
-            'listener' => 'employees\\V1\\Rest\\Transport\\TransportResource',
+            'listener' => \employees\V1\Rest\Transport\TransportResource::class,
             'route_name' => 'employees.rest.transport',
             'route_identifier_name' => 'transport_id',
             'collection_name' => 'transport',
             'entity_http_methods' => [
                 0 => 'GET',
                 1 => 'PATCH',
-                2 => 'PUT',
-                3 => 'DELETE',
+                2 => 'DELETE',
+                3 => 'PUT',
             ],
             'collection_http_methods' => [
                 0 => 'GET',
+                1 => 'POST',
             ],
             'collection_query_whitelist' => [],
             'page_size' => 25,
@@ -169,6 +171,7 @@ return [
                 'controller_service_name' => 'employees\\V1\\Rest\\Transport\\Controller',
                 'entity_identifier_name' => 'id_transport',
                 'table_service' => 'employees\\V1\\Rest\\Transport\\TransportResource\\Table',
+                'resource_class' => \employees\V1\Rest\Transport\TransportResource::class, // ← NUEVA LÍNEA
             ],
         ],
     ],
@@ -216,7 +219,7 @@ return [
         'employees\\V1\\Rest\\Transport\\Validator' => [
             0 => [
                 'name' => 'id_transport',
-                'required' => true,
+                'required' => false,
                 'filters' => [],
                 'validators' => [],
             ],

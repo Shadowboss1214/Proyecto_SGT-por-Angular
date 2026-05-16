@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Transport } from '../../models/transport';
 import { Component, Input, OnInit } from '@angular/core';
-import { TransportService } from '../../services';
+import { TransportService } from '../../services/transport';
 import { Router } from '@angular/router';
 import { Validators } from '@angular/forms';
 
@@ -20,7 +20,7 @@ export class TransportFormComponent implements OnInit {
     private service: TransportService,
     private router: Router) { }
 
-  form!: any;
+  form!: FormGroup;
   @Input() data?: Transport;
   @Input() id?: string;
 
@@ -30,10 +30,13 @@ export class TransportFormComponent implements OnInit {
       type: ['', Validators.required],
       plate: ['', [Validators.required, Validators.minLength(5)]],
       status: ['', Validators.required],
-      costPerKm: ['', [Validators.required, Validators.pattern("^[0-9]+(.[0-9]{1,2})?$")]],
-      maintenanceCost: ['', [Validators.required, Validators.pattern("^[0-9]+(.[0-9]{1,2})?$")]],
-      fuelConsumption: ['', [Validators.required, Validators.pattern("^[0-9]*$")]]
+      // ✅ FIX: el punto en el regex debe escaparse para no aceptar cualquier carácter
+      costPerKm: ['', [Validators.required, Validators.pattern("^[0-9]+(\.[0-9]{1,2})?$")]],
+      maintenanceCost: ['', [Validators.required, Validators.pattern("^[0-9]+(\.[0-9]{1,2})?$")]],
+      // ✅ FIX: permite decimales igual que los otros campos numéricos
+      fuelConsumption: ['', [Validators.required, Validators.pattern("^[0-9]+(\.[0-9]{1,2})?$")]]
     });
+
     if (this.data) {
       this.form.patchValue({
         name: this.data.name,
@@ -51,23 +54,54 @@ export class TransportFormComponent implements OnInit {
     if (this.form.invalid) return;
 
     const v = this.form.value;
-    const value: Transport = {
-      id_transport: 0,
-      name: v.name,
-      type: v.type,
-      plate: v.plate,
-      status: v.status,
-      costperkm: v.costPerKm,
-      maintenancecost: v.maintenanceCost,
-      fuelconsumption: v.fuelConsumption,
-    };
 
     if (this.id) {
-      this.service.update(+this.id, value);
-    } else {
-      this.service.create(value);
-    }
+      // ✅ UPDATE: incluye el id para identificar el registro
+      const value: Transport = {
+        id_transport: 0, // este campo no se envía en el UPDATE, el backend lo ignora
+        name: v.name,
+        type: v.type,
+        plate: v.plate,
+        status: v.status,
+        costperkm: +v.costPerKm,
+        maintenancecost: +v.maintenanceCost,
+        fuelconsumption: +v.fuelConsumption,
+      };
 
-    this.router.navigate(['/transport']);
+      this.service.update(+this.id, value).subscribe({
+        next: () => {
+          console.log('Transporte actualizado con éxito');
+          this.router.navigate(['/transport']);
+        },
+        error: (err: any) => {
+          console.error('Error al actualizar transporte - Status:', err.status);
+          console.error('Detalle del servidor:', err.error);
+        }
+      });
+
+    } else {
+      // ✅ FIX PRINCIPAL: en el CREATE no se envía id_transport
+      // para que Supabase lo genere automáticamente con nextval()
+      const value: Omit<Transport, 'id_transport'> = {
+        name: v.name,
+        type: v.type,
+        plate: v.plate,
+        status: v.status,
+        costperkm: +v.costPerKm,
+        maintenancecost: +v.maintenanceCost,
+        fuelconsumption: +v.fuelConsumption,
+      };
+
+      this.service.create(value as Transport).subscribe({
+        next: () => {
+          console.log('Transporte creado con éxito');
+          this.router.navigate(['/transport']);
+        },
+        error: (err: any) => {
+          console.error('❌ Error al crear transporte - Status:', err.status);
+          console.error('❌ Detalle del servidor:', err.error);
+        }
+      });
+    }
   }
 }
