@@ -27,7 +27,11 @@ export class EmployeeFormComponent implements OnInit {
   ngOnInit() {
     this.form = this.fb.group({
       name: ['', Validators.required],
+      lastName: ['', Validators.required],
       salary: ['', [Validators.required, Validators.pattern("^[0-9]+(.[0-9]{1,2})?$")]],
+      role: ['', Validators.required],
+      username: ['', Validators.required],
+      password: ['', [Validators.required, Validators.minLength(6)]],
     });
     if (this.data) {
       this.form.patchValue(this.data);
