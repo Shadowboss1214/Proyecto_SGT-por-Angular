@@ -7,11 +7,6 @@ use Laminas\ApiTools\DbConnectedResource;
 
 class TransportResource extends DbConnectedResource
 {
-    /**
-     * Sobrescribimos create() para que funcione correctamente con PostgreSQL/Supabase.
-     * El problema original: Laminas enviaba id_transport=null al INSERT violando
-     * el NOT NULL constraint, y getLastInsertValue() no funciona con PostgreSQL.
-     */
     public function create($data)
     {
         // 1. Obtenemos los datos del input filter (igual que el padre)

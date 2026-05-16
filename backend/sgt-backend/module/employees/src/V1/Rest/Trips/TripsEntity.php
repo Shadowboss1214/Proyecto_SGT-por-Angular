@@ -1,6 +1,8 @@
 <?php
 namespace employees\V1\Rest\Trips;
 
-class TripsEntity
+use ArrayObject;
+
+class TripsEntity extends ArrayObject
 {
 }
