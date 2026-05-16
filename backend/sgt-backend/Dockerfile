@@ -1,4 +1,4 @@
-FROM php:8.2-cli
+FROM php:8.1-cli
 
 RUN apt-get update && apt-get install -y \
     git \
@@ -6,7 +6,8 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     libpq-dev \
-    && docker-php-ext-install pdo pdo_pgsql \
+    libicu-dev \
+    && docker-php-ext-install pdo pdo_pgsql intl \
     && apt-get clean
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -15,7 +16,9 @@ WORKDIR /app
 
 COPY . .
 
-RUN composer install --no-dev --optimize-autoloader
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
+RUN composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-intl
 
 EXPOSE 8080
 
