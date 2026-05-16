@@ -5,7 +5,7 @@ return [
             'employees.rest.employees' => [
                 'type' => 'Segment',
                 'options' => [
-                    'route' => '/employees[/:employees_id]',
+                    'route' => '/employees[/:employee_id]',
                     'defaults' => [
                         'controller' => 'employees\\V1\\Rest\\Employees\\Controller',
                     ],
@@ -24,9 +24,18 @@ return [
             'employees.rest.transport' => [
                 'type' => 'Segment',
                 'options' => [
-                    'route' => '/transport[/:transport_id]',
+                    'route' => '/transport[/:id_transport]',
                     'defaults' => [
                         'controller' => 'employees\\V1\\Rest\\Transport\\Controller',
+                    ],
+                ],
+            ],
+            'employees.rest.trips' => [
+                'type' => 'Segment',
+                'options' => [
+                    'route' => '/trips[/:trips_id]',
+                    'defaults' => [
+                        'controller' => 'employees\\V1\\Rest\\Trips\\Controller',
                     ],
                 ],
             ],
@@ -37,6 +46,7 @@ return [
             0 => 'employees.rest.employees',
             1 => 'employees.rpc.register',
             2 => 'employees.rest.transport',
+            3 => 'employees.rest.trips',
         ],
     ],
     'api-tools-rest' => [
@@ -50,6 +60,7 @@ return [
                 1 => 'PATCH',
                 2 => 'PUT',
                 3 => 'DELETE',
+                4 => 'POST',
             ],
             'collection_http_methods' => [
                 0 => 'GET',
@@ -65,18 +76,19 @@ return [
             'service_name' => 'employees',
         ],
         'employees\\V1\\Rest\\Transport\\Controller' => [
-            'listener' => 'employees\\V1\\Rest\\Transport\\TransportResource',
+            'listener' => \employees\V1\Rest\Transport\TransportResource::class,
             'route_name' => 'employees.rest.transport',
             'route_identifier_name' => 'transport_id',
             'collection_name' => 'transport',
             'entity_http_methods' => [
                 0 => 'GET',
                 1 => 'PATCH',
-                2 => 'PUT',
-                3 => 'DELETE',
+                2 => 'DELETE',
+                3 => 'PUT',
             ],
             'collection_http_methods' => [
                 0 => 'GET',
+                1 => 'POST',
             ],
             'collection_query_whitelist' => [],
             'page_size' => 25,
@@ -85,12 +97,35 @@ return [
             'collection_class' => \employees\V1\Rest\Transport\TransportCollection::class,
             'service_name' => 'transport',
         ],
+        'employees\\V1\\Rest\\Trips\\Controller' => [
+            'listener' => \employees\V1\Rest\Trips\TripsResource::class,
+            'route_name' => 'employees.rest.trips',
+            'route_identifier_name' => 'trips_id',
+            'collection_name' => 'trips',
+            'entity_http_methods' => [
+                0 => 'GET',
+                1 => 'PATCH',
+                2 => 'PUT',
+                3 => 'DELETE',
+            ],
+            'collection_http_methods' => [
+                0 => 'GET',
+                1 => 'POST',
+            ],
+            'collection_query_whitelist' => [],
+            'page_size' => 25,
+            'page_size_param' => null,
+            'entity_class' => \employees\V1\Rest\Trips\TripsEntity::class,
+            'collection_class' => \employees\V1\Rest\Trips\TripsCollection::class,
+            'service_name' => 'trips',
+        ],
     ],
     'api-tools-content-negotiation' => [
         'controllers' => [
             'employees\\V1\\Rest\\Employees\\Controller' => 'HalJson',
             'employees\\V1\\Rpc\\Register\\Controller' => 'Json',
             'employees\\V1\\Rest\\Transport\\Controller' => 'HalJson',
+            'employees\\V1\\Rest\\Trips\\Controller' => 'HalJson',
         ],
         'accept_whitelist' => [
             'employees\\V1\\Rest\\Employees\\Controller' => [
@@ -108,6 +143,11 @@ return [
                 1 => 'application/hal+json',
                 2 => 'application/json',
             ],
+            'employees\\V1\\Rest\\Trips\\Controller' => [
+                0 => 'application/vnd.employees.v1+json',
+                1 => 'application/hal+json',
+                2 => 'application/json',
+            ],
         ],
         'content_type_whitelist' => [
             'employees\\V1\\Rest\\Employees\\Controller' => [
@@ -119,6 +159,10 @@ return [
                 1 => 'application/json',
             ],
             'employees\\V1\\Rest\\Transport\\Controller' => [
+                0 => 'application/vnd.employees.v1+json',
+                1 => 'application/json',
+            ],
+            'employees\\V1\\Rest\\Trips\\Controller' => [
                 0 => 'application/vnd.employees.v1+json',
                 1 => 'application/json',
             ],
@@ -150,6 +194,18 @@ return [
                 'route_identifier_name' => 'transport_id',
                 'is_collection' => true,
             ],
+            \employees\V1\Rest\Trips\TripsEntity::class => [
+                'entity_identifier_name' => 'id',
+                'route_name' => 'employees.rest.trips',
+                'route_identifier_name' => 'trips_id',
+                'hydrator' => \Laminas\Hydrator\ArraySerializableHydrator::class,
+            ],
+            \employees\V1\Rest\Trips\TripsCollection::class => [
+                'entity_identifier_name' => 'id',
+                'route_name' => 'employees.rest.trips',
+                'route_identifier_name' => 'trips_id',
+                'is_collection' => true,
+            ],
         ],
     ],
     'api-tools' => [
@@ -162,13 +218,14 @@ return [
                 'entity_identifier_name' => 'id_employee',
                 'table_service' => 'employees\\V1\\Rest\\Employees\\EmployeesResource\\Table',
             ],
-            'employees\\V1\\Rest\\Transport\\TransportResource' => [
+            \employees\V1\Rest\Transport\TransportResource::class => [
                 'adapter_name' => 'db_oauth2',
                 'table_name' => 'transport',
                 'hydrator_name' => \Laminas\Hydrator\ArraySerializableHydrator::class,
                 'controller_service_name' => 'employees\\V1\\Rest\\Transport\\Controller',
                 'entity_identifier_name' => 'id_transport',
                 'table_service' => 'employees\\V1\\Rest\\Transport\\TransportResource\\Table',
+                'resource_class' => \employees\V1\Rest\Transport\TransportResource::class,
             ],
         ],
     ],
@@ -216,7 +273,7 @@ return [
         'employees\\V1\\Rest\\Transport\\Validator' => [
             0 => [
                 'name' => 'id_transport',
-                'required' => true,
+                'required' => false,
                 'filters' => [],
                 'validators' => [],
             ],
@@ -321,6 +378,11 @@ return [
                 0 => 'POST',
             ],
             'route_name' => 'employees.rpc.register',
+        ],
+    ],
+    'service_manager' => [
+        'factories' => [
+            \employees\V1\Rest\Trips\TripsResource::class => \employees\V1\Rest\Trips\TripsResourceFactory::class,
         ],
     ],
 ];
