@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { AuthService } from '../services/auth';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { NavigationService } from '../../../core/services/nav.service';
 
 @Component({
   selector: 'app-login',
@@ -17,7 +17,7 @@ export class LoginComponent {
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: NavigationService
   ) {}
 
   login() {

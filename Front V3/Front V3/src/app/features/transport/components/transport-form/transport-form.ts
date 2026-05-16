@@ -3,7 +3,7 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Transport } from '../../models/transport';
 import { Component, Input, OnInit } from '@angular/core';
 import { TransportService } from '../../services';
-import { Router } from '@angular/router';
+import { NavigationService } from '../../../../core/services/nav.service';
 import { Validators } from '@angular/forms';
 
 @Component({
@@ -18,7 +18,7 @@ export class TransportFormComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private service: TransportService,
-    private router: Router) { }
+    private router: NavigationService) { }
 
   form!: any;
   @Input() data?: Transport;

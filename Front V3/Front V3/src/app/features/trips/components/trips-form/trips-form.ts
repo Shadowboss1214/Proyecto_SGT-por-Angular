@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { NavigationService } from '../../../../core/services/nav.service';
 import { Route, Trip } from '../../models/trips';
 import { Employee } from '../../../employes/models/employee';
 import { Transport } from '../../../transport/models/transport';
@@ -21,7 +21,7 @@ export class TripsForm implements OnInit {
   private tripService = inject(TripService);
   private transportService = inject(TransportService);
   private employeeService = inject(EmployeeService);
-  private router = inject(Router);
+  private router = inject(NavigationService);
 
   @Input() data?: Trip;
   @Input() id?: number;
