@@ -4,12 +4,11 @@ import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { LoginRequest, TokenResponse } from '../../features/login/models/login';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class AuthService {
 
-  private apiUrl = 'http://localhost:8080/oauth';
+  private apiUrl      = 'http://localhost:8080/oauth';
+  private employeeUrl = 'http://localhost:8080/employees';
 
   constructor(private http: HttpClient) {}
 
@@ -19,56 +18,33 @@ export class AuthService {
     body.set('username', data.username);
     body.set('password', data.password);
     body.set('client_id', 'angular_app');
-
-    const headers = new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' });
-    return this.http.post<TokenResponse>(this.apiUrl, body.toString(), { headers });
+    return this.http.post<TokenResponse>(this.apiUrl, body.toString(), {
+      headers: new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' })
+    });
   }
 
-  saveToken(token: string) {
-    localStorage.setItem('access_token', token);
+  getEmployeeByUsername(username: string, token: string): Observable<any> {
+    return this.http.get<any>(`${this.employeeUrl}?username=${username}`, {
+      headers: new HttpHeaders({ 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' })
+    });
   }
 
-  getToken(): string | null {
-    return localStorage.getItem('access_token');
-  }
+  // ── Token storage ────────────────────────────────────────────
+  saveToken(token: string)        { localStorage.setItem('access_token', token); }
+  getToken(): string | null       { return localStorage.getItem('access_token'); }
 
-  saveRefreshToken(token: string) {
-    localStorage.setItem('refresh_token', token);
-  }
+  saveRefreshToken(token: string) { localStorage.setItem('refresh_token', token); }
+  getRefreshToken(): string | null{ return localStorage.getItem('refresh_token'); }
 
-  getRefreshToken(): string | null {
-    return localStorage.getItem('refresh_token');
-  }
+  saveRole(role: string)          { localStorage.setItem('role', role); }
+  saveEmployeeId(id: number)      { localStorage.setItem('employee_id', String(id)); }
 
-  refreshToken(): Observable<any> {
-    const token = this.getRefreshToken();
-    const body = new URLSearchParams();
-    body.set('grant_type', 'refresh_token');
-    body.set('refresh_token', token!);
-    body.set('client_id', 'angular_app');
-
-    const headers = new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' });
-    return this.http.post<any>(this.apiUrl, body.toString(), { headers }).pipe(
-      tap(response => {
-        this.saveToken(response.access_token);
-        if (response.refresh_token) {
-          this.saveRefreshToken(response.refresh_token);
-        }
-      })
-    );
-  }
-
-  logout() {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-  }
-
+  // ── JWT helpers (works when token is JWT; falls back to localStorage) ───
   getTokenPayload(): any {
     const token = this.getToken();
     if (!token) return null;
     try {
-      const payload = token.split('.')[1];
-      return JSON.parse(atob(payload));
+      return JSON.parse(atob(token.split('.')[1]));
     } catch {
       return null;
     }
@@ -81,10 +57,38 @@ export class AuthService {
   }
 
   getRole(): string {
-    return (this.getTokenPayload()?.role ?? '').toLowerCase();
+    const fromJwt = this.getTokenPayload()?.role;
+    if (fromJwt) return fromJwt.toLowerCase();
+    return (localStorage.getItem('role') ?? '').toLowerCase();
   }
 
   getEmployeeId(): string {
-    return String(this.getTokenPayload()?.employeeId ?? '');
+    const fromJwt = this.getTokenPayload()?.employeeId;
+    if (fromJwt) return String(fromJwt);
+    return localStorage.getItem('employee_id') ?? '';
+  }
+
+  // ── Refresh token ────────────────────────────────────────────
+  refreshToken(): Observable<any> {
+    const token = this.getRefreshToken();
+    const body = new URLSearchParams();
+    body.set('grant_type', 'refresh_token');
+    body.set('refresh_token', token!);
+    body.set('client_id', 'angular_app');
+    return this.http.post<any>(this.apiUrl, body.toString(), {
+      headers: new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' })
+    }).pipe(
+      tap(response => {
+        this.saveToken(response.access_token);
+        if (response.refresh_token) this.saveRefreshToken(response.refresh_token);
+      })
+    );
+  }
+
+  logout() {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('employee_id');
   }
 }

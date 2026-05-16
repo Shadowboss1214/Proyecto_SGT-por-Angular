@@ -45,7 +45,10 @@ export class TransportListComponent implements OnInit {
   }
 
   onDelete(item: Transport) {
-    this.service.delete(item.id_transport);
+    this.service.delete(item.id_transport).subscribe({
+      next: () => this.loadTransports(),
+      error: (err: any) => console.error('Error al eliminar transporte:', err)
+    });
   }
 
   get filtered(): Transport[] {

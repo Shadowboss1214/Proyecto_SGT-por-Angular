@@ -46,6 +46,8 @@ export class TripsForm implements OnInit {
   });
 
   ngOnInit() {
+    this.transportService.getLatestTransports().subscribe();
+    this.employeeService.getLatestEmployees().subscribe();
     this.transportService.getAll().subscribe(data => this.transport = data);
     this.employeeService.getAll().subscribe(data => this.employes = data);
 
@@ -69,11 +71,13 @@ export class TripsForm implements OnInit {
     };
 
     if (this.id) {
-      this.tripService.update(this.id, value);
+      this.tripService.update(this.id, value).subscribe(() => {
+        this.router.navigate(['/trips']);
+      });
     } else {
-      this.tripService.create(value);
+      this.tripService.create(value).subscribe(() => {
+        this.router.navigate(['/trips']);
+      });
     }
-
-    this.router.navigate(['/trips']);
   }
 }

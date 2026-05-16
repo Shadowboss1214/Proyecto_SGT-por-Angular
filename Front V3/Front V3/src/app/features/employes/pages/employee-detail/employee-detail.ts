@@ -4,7 +4,7 @@ import { EmployeeService } from '../../services/employes';
 import { Employee } from '../../models/employee';
 import { CommonModule } from '@angular/common';
 import { NavigationService } from '../../../../core/services/nav.service';
-import { EmployeeFormComponent } from '../../components/employee-form/employee-form'; 
+import { EmployeeFormComponent } from '../../components/employee-form/employee-form';
 
 @Component({
   selector: 'app-Employee-detail',
@@ -16,29 +16,29 @@ import { EmployeeFormComponent } from '../../components/employee-form/employee-f
 export class EmployeeDetailComponent implements OnInit {
 
   employee?: Employee;
+  isEdit = false;
 
   constructor(
     private route: ActivatedRoute,
     private router: NavigationService,
     private service: EmployeeService
-  ) { }
+  ) {}
 
-  isEdit = false;
+  ngOnInit() {
+    const id = this.route.snapshot.paramMap.get('id');
+    const url = this.route.snapshot.url.map(s => s.path);
 
-ngOnInit() {
-  const id = this.route.snapshot.paramMap.get('id');
-  const url = this.route.snapshot.url.map(s => s.path);
+    const isNew = url.includes('new');
+    this.isEdit = url.includes('edit') || isNew;
 
-  const isNew = url.includes('new');
-  this.isEdit = url.includes('edit') || isNew;
-
-  if (id && !isNew) {
-    this.employee = this.service.getById(Number(id));
+    if (id && !isNew) {
+      this.service.getById(Number(id)).subscribe(emp => this.employee = emp);
+    }
   }
-}
 
-delete(id: string){
-  this.service.delete(Number(id));
-  this.router.navigate(['/employee']);
-}
+  delete(id: string) {
+    this.service.delete(Number(id)).subscribe(() => {
+      this.router.navigate(['/employee']);
+    });
+  }
 }

@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
-import { AuthService } from '../services/auth';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../../core/services/auth.service';
 import { NavigationService } from '../../../core/services/nav.service';
 
 @Component({
@@ -29,21 +29,30 @@ export class LoginComponent {
     this.authService.login({ username: this.username, password: this.password }).subscribe({
       next: (response: any) => {
         this.authService.saveToken(response.access_token);
-        if (response.refresh_token) {
-          this.authService.saveRefreshToken(response.refresh_token);
-        }
+        if (response.refresh_token) this.authService.saveRefreshToken(response.refresh_token);
 
-        const role = this.authService.getRole();
-        if (role === 'admin') {
-          this.router.navigate(['/app/admin/dashboard']);
-        } else {
-          this.router.navigate(['/app/driver/dashboard']);
-        }
+        this.authService.getEmployeeByUsername(this.username, response.access_token).subscribe({
+          next: (data: any) => {
+            const employees = data._embedded?.employees ?? [];
+            const current = employees.find((e: any) => e.username === this.username);
+
+            if (current) {
+              this.authService.saveRole(current.role);
+              this.authService.saveEmployeeId(current.id_employee);
+
+              if (current.role === 'ADMIN') {
+                this.router.navigate(['/app/admin/dashboard']);
+              } else {
+                this.router.navigate(['/app/driver/dashboard']);
+              }
+            } else {
+              alert('Usuario no encontrado en la base de datos de empleados');
+            }
+          },
+          error: () => alert('Error al verificar el rol del usuario')
+        });
       },
-      error: (error: any) => {
-        console.error('Error en el login:', error);
-        alert('Usuario o contraseña incorrectos');
-      }
+      error: () => alert('Usuario o contraseña incorrectos')
     });
   }
 }
