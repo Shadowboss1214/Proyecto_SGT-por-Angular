@@ -9,7 +9,7 @@ import { Employee } from '../../../employes/models/employee';
 import { Transport } from '../../../transport/models/transport';
 import { TransportService } from '../../../transport/services/transport';
 import { EmployeeService } from '../../../employes/services/employes';
-import { AuthService } from '../../../login';
+import { AuthService } from '../../../../core/services/auth.service';
 import { ReportService } from '../../../../core/services/report.service';
 import { QrModalComponent } from '../../../../shared/components/qr-modal/qr-modal';
 import { NavigationService } from '../../../../core/services/nav.service';
@@ -60,6 +60,10 @@ export class TripsListComponent implements OnInit {
   tripsView: any[] = [];
 
   ngOnInit() {
+    this.service.getLatestTrips().subscribe();
+    this.transportService.getLatestTransports().subscribe();
+    this.employeeService.getLatestEmployees().subscribe();
+
     combineLatest([
       this.service.getAll(),
       this.transportService.getAll(),
@@ -93,7 +97,7 @@ export class TripsListComponent implements OnInit {
   }
 
   onDelete(item: Trip) {
-    this.service.delete(item.id_trip);
+    this.service.delete(item.id_trip).subscribe();
   }
 
   getTransportName(id: number) {

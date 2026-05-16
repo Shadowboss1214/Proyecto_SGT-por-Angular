@@ -18,7 +18,8 @@ export class EmployeeFormComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private service: EmployeeService,
-    private router: NavigationService) { }
+    private router: NavigationService
+  ) {}
 
   form!: any;
   @Input() data?: Employee;
@@ -26,10 +27,10 @@ export class EmployeeFormComponent implements OnInit {
 
   ngOnInit() {
     this.form = this.fb.group({
-      name: ['', Validators.required],
+      name:     ['', Validators.required],
       lastName: ['', Validators.required],
-      salary: ['', [Validators.required, Validators.pattern("^[0-9]+(.[0-9]{1,2})?$")]],
-      role: ['', Validators.required],
+      salary:   ['', [Validators.required, Validators.pattern("^[0-9]+(.[0-9]{1,2})?$")]],
+      role:     ['', Validators.required],
       username: ['', Validators.required],
       password: ['', [Validators.required, Validators.minLength(6)]],
     });
@@ -44,11 +45,13 @@ export class EmployeeFormComponent implements OnInit {
     const value = this.form.value as Employee;
 
     if (this.id) {
-      this.service.update(+this.id, value);
+      this.service.update(+this.id, value).subscribe(() => {
+        this.router.navigate(['/employee']);
+      });
     } else {
-      this.service.create(value);
+      this.service.register(value).subscribe(() => {
+        this.router.navigate(['/employee']);
+      });
     }
-
-    this.router.navigate(['/employee']);
   }
 }

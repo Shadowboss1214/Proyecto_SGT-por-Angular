@@ -1,54 +1,73 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 import { Trip } from '../models/trips';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class TripService {
 
-  // Array vacío para iniciar desde cero
   private data: Trip[] = [];
+  private apiUrl = 'http://localhost:8080/trips';
 
   private subject = new BehaviorSubject<Trip[]>(this.data);
   data$: Observable<Trip[]> = this.subject.asObservable();
+
+  constructor(private http: HttpClient, private authService: AuthService) {}
+
+  private getHeaders(): HttpHeaders {
+    const token = this.authService.getToken();
+    return new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+  }
+
+  private refresh(): void {
+    this.subject.next([...this.data]);
+  }
 
   getAll(): Observable<Trip[]> {
     return this.data$;
   }
 
-  // Cambiado a id_trip y tipo number
-  getById(id: number): Trip | undefined {
-    return this.data.find(t => t.id_trip === id);
+  getLatestTrips(): Observable<Trip[]> {
+    if (this.data.length > 0) return of(this.data);
+    return this.http.get<any>(this.apiUrl, { headers: this.getHeaders() }).pipe(
+      map(response => {
+        const list = response._embedded?.trips || [];
+        this.data = list;
+        this.refresh();
+        return [...list];
+      })
+    );
   }
 
-  create(tripData: Trip): void {
-    const newTrip: Trip = { 
-      ...tripData, 
-      // Generamos un ID numérico temporal para simular el SERIAL de la DB
-      id_trip: Math.floor(Date.now() / 1000) 
-    };
-    
-    this.data.push(newTrip);
-    this.refresh();
+  private invalidate(): void {
+    this.data = [];
   }
 
-  // Cambiado a id_trip y tipo number
-  update(id: number, tripData: Trip): void {
-    const index = this.data.findIndex(t => t.id_trip === id);
-
-    if (index !== -1) {
-      // Mantenemos el id_trip original
-      this.data[index] = { ...tripData, id_trip: id };
-      this.refresh();
-    }
+  getById(id: number): Observable<Trip> {
+    return this.http.get<Trip>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() });
   }
 
-  // Cambiado a id_trip y tipo number
-  delete(id: number): void {
-    this.data = this.data.filter(t => t.id_trip !== id);
-    this.refresh();
+  create(tripData: Trip): Observable<any> {
+    const { id_trip, ...payload } = tripData;
+    return this.http.post<any>(this.apiUrl, payload, { headers: this.getHeaders() }).pipe(
+      tap(() => { this.invalidate(); this.getLatestTrips().subscribe(); })
+    );
   }
 
-  private refresh(): void {
-    this.subject.next([...this.data]);
+  update(id: number, tripData: Trip): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/${id}`, tripData, { headers: this.getHeaders() }).pipe(
+      tap(() => { this.invalidate(); this.getLatestTrips().subscribe(); })
+    );
+  }
+
+  delete(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() }).pipe(
+      tap(() => { this.invalidate(); this.getLatestTrips().subscribe(); })
+    );
   }
 }
