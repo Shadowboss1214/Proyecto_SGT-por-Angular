@@ -1,21 +1,45 @@
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
+import { NavigationService } from '../services/nav.service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const authService = inject(AuthService);
-  const token = authService.getToken();
+  const auth = inject(AuthService);
+  const nav = inject(NavigationService);
+  const token = auth.getToken();
 
-  // Si tenemos un token, clonamos la petición y le añadimos el header Authorization
-  if (token) {
-    const authReq = req.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`
+  const authReq = token
+    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+    : req;
+
+  return next(authReq).pipe(
+    catchError((error: HttpErrorResponse) => {
+      // Evitar loop infinito: no reintentar si el request que falló es el de refresh
+      const isOAuthRequest = req.url.includes('/oauth');
+
+      if (error.status === 401 && !isOAuthRequest && auth.getRefreshToken()) {
+        return auth.refreshToken().pipe(
+          switchMap(response => {
+            const retryReq = req.clone({
+              setHeaders: { Authorization: `Bearer ${response.access_token}` }
+            });
+            return next(retryReq);
+          }),
+          catchError(() => {
+            auth.logout();
+            nav.navigate(['/app/login']);
+            return throwError(() => error);
+          })
+        );
       }
-    });
-    return next(authReq);
-  }
 
-  // Si no hay token (como en el login), la petición sigue su curso normal
-  return next(req);
+      if (error.status === 401) {
+        auth.logout();
+        nav.navigate(['/app/login']);
+      }
+
+      return throwError(() => error);
+    })
+  );
 };
