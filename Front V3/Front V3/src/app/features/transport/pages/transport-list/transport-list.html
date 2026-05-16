@@ -11,6 +11,14 @@
     </select>
 
     <button routerLink="new">Nuevo</button>
+
+    <button class="btn-export btn-pdf" (click)="exportPdf()" title="Exportar a PDF">
+        📄 PDF
+    </button>
+
+    <button class="btn-export btn-excel" (click)="exportExcel()" title="Exportar a Excel">
+        📊 Excel
+    </button>
 </div>
 
 <app-table 

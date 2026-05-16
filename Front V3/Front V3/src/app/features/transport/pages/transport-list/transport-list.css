@@ -5,6 +5,10 @@
   align-items: center;
 }
 
+.filters input,
+.filters select {
+  flex: 1;
+}
 
 .filters button {
   background: #3b82f6;
