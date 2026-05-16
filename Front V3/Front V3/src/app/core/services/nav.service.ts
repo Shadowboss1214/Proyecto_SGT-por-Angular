@@ -30,7 +30,6 @@ export class NavigationService {
         }
         console.log(ruta)
         if (this.roleBase) {
-             this.router.navigate([this.roleBase, segments.join('')], extras);
             this.router.navigate( [`${ruta}`] , extras);
         } else {
             this.router.navigate([this.roleBase, segments.join('')], extras);
