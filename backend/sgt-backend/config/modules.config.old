@@ -30,5 +30,6 @@ return [
     'Laminas\\ApiTools\\Versioning',
     'Laminas\\ZendFrameworkBridge',
     'Application',
-    'employees', // Este es el nombre interno del módulo que creaste en API Tools
+    'employees',
+    'Ingreso_Camiones',
 ];
