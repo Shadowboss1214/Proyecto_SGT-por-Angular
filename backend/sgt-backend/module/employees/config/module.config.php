@@ -5,7 +5,7 @@ return [
             'employees.rest.employees' => [
                 'type' => 'Segment',
                 'options' => [
-                    'route' => '/employees[/:employees_id]',
+                    'route' => '/employees[/:employee_id]',
                     'defaults' => [
                         'controller' => 'employees\\V1\\Rest\\Employees\\Controller',
                     ],
