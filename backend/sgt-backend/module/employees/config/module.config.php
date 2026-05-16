@@ -39,6 +39,16 @@ return [
                     ],
                 ],
             ],
+            'employees.rpc.logistics' => [
+                'type' => 'Segment',
+                'options' => [
+                    'route' => '/logistics',
+                    'defaults' => [
+                        'controller' => 'employees\\V1\\Rpc\\Logistics\\Controller',
+                        'action' => 'logistics',
+                    ],
+                ],
+            ],
         ],
     ],
     'api-tools-versioning' => [
@@ -47,6 +57,7 @@ return [
             1 => 'employees.rpc.register',
             2 => 'employees.rest.transport',
             3 => 'employees.rest.trips',
+            4 => 'employees.rpc.logistics',
         ],
     ],
     'api-tools-rest' => [
@@ -127,6 +138,7 @@ return [
             'employees\\V1\\Rpc\\Register\\Controller' => 'Json',
             'employees\\V1\\Rest\\Transport\\Controller' => 'HalJson',
             'employees\\V1\\Rest\\Trips\\Controller' => 'HalJson',
+            'employees\\V1\\Rpc\\Logistics\\Controller' => 'Json',
         ],
         'accept_whitelist' => [
             'employees\\V1\\Rest\\Employees\\Controller' => [
@@ -149,6 +161,11 @@ return [
                 1 => 'application/hal+json',
                 2 => 'application/json',
             ],
+            'employees\\V1\\Rpc\\Logistics\\Controller' => [
+                0 => 'application/vnd.employees.v1+json',
+                1 => 'application/json',
+                2 => 'application/*+json',
+            ],
         ],
         'content_type_whitelist' => [
             'employees\\V1\\Rest\\Employees\\Controller' => [
@@ -164,6 +181,10 @@ return [
                 1 => 'application/json',
             ],
             'employees\\V1\\Rest\\Trips\\Controller' => [
+                0 => 'application/vnd.employees.v1+json',
+                1 => 'application/json',
+            ],
+            'employees\\V1\\Rpc\\Logistics\\Controller' => [
                 0 => 'application/vnd.employees.v1+json',
                 1 => 'application/json',
             ],
@@ -379,6 +400,7 @@ return [
     'controllers' => [
         'factories' => [
             'employees\\V1\\Rpc\\Register\\Controller' => \employees\V1\Rpc\Register\RegisterControllerFactory::class,
+            'employees\\V1\\Rpc\\Logistics\\Controller' => \employees\V1\Rpc\Logistics\LogisticsControllerFactory::class,
         ],
     ],
     'api-tools-rpc' => [
@@ -388,6 +410,13 @@ return [
                 0 => 'POST',
             ],
             'route_name' => 'employees.rpc.register',
+        ],
+        'employees\\V1\\Rpc\\Logistics\\Controller' => [
+            'service_name' => 'logistics',
+            'http_methods' => [
+                0 => 'GET',
+            ],
+            'route_name' => 'employees.rpc.logistics',
         ],
     ],
 ];
