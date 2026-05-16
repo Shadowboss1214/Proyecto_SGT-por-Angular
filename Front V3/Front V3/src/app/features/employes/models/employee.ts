@@ -1,8 +1,10 @@
 export interface Employee {
-  id_employee: number; // Coincide con SERIAL PRIMARY KEY
+  id_employee: number;
   name: string;
+  lastName: string;
   salary: number;
-  // Si estos no están en la DB pero los necesitas en el Front, úsalos como opcionales:
-  position?: string;
+  role: string;
+  username: string;
+  password: string;
   tripsCompleted?: number;
 }
