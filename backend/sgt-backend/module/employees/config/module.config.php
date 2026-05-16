@@ -33,7 +33,7 @@ return [
             'employees.rest.trips' => [
                 'type' => 'Segment',
                 'options' => [
-                    'route' => '/trips[/:trips_id]',
+                    'route' => '/trips[/:id_trip]',
                     'defaults' => [
                         'controller' => 'employees\\V1\\Rest\\Trips\\Controller',
                     ],
@@ -107,6 +107,7 @@ return [
                 1 => 'PATCH',
                 2 => 'PUT',
                 3 => 'DELETE',
+                4 => 'POST',
             ],
             'collection_http_methods' => [
                 0 => 'GET',
@@ -195,13 +196,13 @@ return [
                 'is_collection' => true,
             ],
             \employees\V1\Rest\Trips\TripsEntity::class => [
-                'entity_identifier_name' => 'id',
+                'entity_identifier_name' => 'id_trip',
                 'route_name' => 'employees.rest.trips',
                 'route_identifier_name' => 'trips_id',
                 'hydrator' => \Laminas\Hydrator\ArraySerializableHydrator::class,
             ],
             \employees\V1\Rest\Trips\TripsCollection::class => [
-                'entity_identifier_name' => 'id',
+                'entity_identifier_name' => 'id_trip',
                 'route_name' => 'employees.rest.trips',
                 'route_identifier_name' => 'trips_id',
                 'is_collection' => true,
@@ -226,6 +227,15 @@ return [
                 'entity_identifier_name' => 'id_transport',
                 'table_service' => 'employees\\V1\\Rest\\Transport\\TransportResource\\Table',
                 'resource_class' => \employees\V1\Rest\Transport\TransportResource::class,
+            ],
+            \employees\V1\Rest\Trips\TripsResource::class => [                                                                                                        
+                'adapter_name' => 'db_oauth2',                                                                                                                        
+                'table_name' => 'trip',                                                                                                                              
+                'hydrator_name' => \Laminas\Hydrator\ArraySerializableHydrator::class,                                                                                
+                'controller_service_name' => 'employees\\V1\\Rest\\Trips\\Controller',                                                                                
+                'entity_identifier_name' => 'id_trip',                                                                                                                
+                'table_service' => 'employees\\V1\\Rest\\Trips\\TripsResource\\Table',                                                                                
+                'resource_class' => \employees\V1\Rest\Trips\TripsResource::class,                                                                                    
             ],
         ],
     ],
@@ -378,11 +388,6 @@ return [
                 0 => 'POST',
             ],
             'route_name' => 'employees.rpc.register',
-        ],
-    ],
-    'service_manager' => [
-        'factories' => [
-            \employees\V1\Rest\Trips\TripsResource::class => \employees\V1\Rest\Trips\TripsResourceFactory::class,
         ],
     ],
 ];
