@@ -23,6 +23,9 @@ RUN composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-in
 # Crear carpeta de caché y dar permisos de escritura
 RUN mkdir -p data/cache && chmod -R 777 data/cache
 
+# Activar modo desarrollo para ver errores detallados
+RUN cp config/development.config.php.dist config/development.config.php
+
 EXPOSE 8080
 
 CMD ["php", "-S", "0.0.0.0:8080", "-t", "public"]
