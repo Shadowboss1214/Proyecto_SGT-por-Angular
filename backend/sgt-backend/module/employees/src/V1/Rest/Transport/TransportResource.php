@@ -46,4 +46,50 @@ class TransportResource extends DbConnectedResource
 
         throw new DomainException('Item not found after insert', 404);
     }
+
+     public function patch($id, $data)
+    {
+    // Convertimos a array
+    $data = (array) $data;
+
+    // Nunca permitir modificar el ID
+    unset($data[$this->identifierName]);
+
+    // Buscar si ya existe otra placa igual
+    if (isset($data['plate'])) {
+
+    $resultSet = $this->table->select([
+        'plate' => $data['plate']
+    ]);
+
+    if ($resultSet->count() > 0) {
+
+        $existing = $resultSet->current();
+
+        $current = (array) $existing;
+
+        // Si pertenece a otro registro
+        if ($current[$this->identifierName] != $id) {
+
+            throw new DomainException(
+                'Plate already exists',
+                422
+            );
+        }
+    }
+}
+
+    // Actualizar
+    $this->table->update(
+        $data,
+        [$this->identifierName => $id]
+    );
+
+    // Retornar registro actualizado
+    $resultSet = $this->table->select([
+        $this->identifierName => $id
+    ]);
+
+    return $resultSet->current();
+    }
 }

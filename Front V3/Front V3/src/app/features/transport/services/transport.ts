@@ -46,7 +46,10 @@ export class TransportService {
 
   // ✅ UPDATE: ahora hace PUT real al backend en vez de solo modificar el arreglo local
   update(id: number, transportData: Transport): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/${id}`, transportData, { headers: this.getHeaders() }).pipe(
+
+    const {    id_transport, ...payload } = transportData;
+   
+    return this.http.patch<any>(`${this.apiUrl}/${id}`, payload, { headers: this.getHeaders() }).pipe(
       tap(() => this.getLatestTransports().subscribe()) // refresca la lista tras actualizar
     );
   }

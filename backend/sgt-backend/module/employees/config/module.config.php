@@ -24,7 +24,7 @@ return [
             'employees.rest.transport' => [
                 'type' => 'Segment',
                 'options' => [
-                    'route' => '/transport[/:id_transport]',
+                    'route' => '/transport[/:transport_id]',
                     'defaults' => [
                         'controller' => 'employees\\V1\\Rest\\Transport\\Controller',
                     ],
@@ -228,14 +228,14 @@ return [
                 'table_service' => 'employees\\V1\\Rest\\Transport\\TransportResource\\Table',
                 'resource_class' => \employees\V1\Rest\Transport\TransportResource::class,
             ],
-            \employees\V1\Rest\Trips\TripsResource::class => [                                                                                                        
-                'adapter_name' => 'db_oauth2',                                                                                                                        
-                'table_name' => 'trip',                                                                                                                              
-                'hydrator_name' => \Laminas\Hydrator\ArraySerializableHydrator::class,                                                                                
-                'controller_service_name' => 'employees\\V1\\Rest\\Trips\\Controller',                                                                                
-                'entity_identifier_name' => 'id_trip',                                                                                                                
-                'table_service' => 'employees\\V1\\Rest\\Trips\\TripsResource\\Table',                                                                                
-                'resource_class' => \employees\V1\Rest\Trips\TripsResource::class,                                                                                    
+            \employees\V1\Rest\Trips\TripsResource::class => [
+                'adapter_name' => 'db_oauth2',
+                'table_name' => 'trip',
+                'hydrator_name' => \Laminas\Hydrator\ArraySerializableHydrator::class,
+                'controller_service_name' => 'employees\\V1\\Rest\\Trips\\Controller',
+                'entity_identifier_name' => 'id_trip',
+                'table_service' => 'employees\\V1\\Rest\\Trips\\TripsResource\\Table',
+                'resource_class' => \employees\V1\Rest\Trips\TripsResource::class,
             ],
         ],
     ],
@@ -303,16 +303,7 @@ return [
                 'name' => 'plate',
                 'required' => true,
                 'filters' => [],
-                'validators' => [
-                    0 => [
-                        'name' => 'Laminas\\ApiTools\\ContentValidation\\Validator\\DbNoRecordExists',
-                        'options' => [
-                            'adapter' => 'db_oauth2',
-                            'table' => 'transport',
-                            'field' => 'plate',
-                        ],
-                    ],
-                ],
+                'validators' => [],
             ],
             4 => [
                 'name' => 'status',
