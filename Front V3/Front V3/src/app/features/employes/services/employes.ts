@@ -4,20 +4,14 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { Employee } from '../models/employee';
 import { AuthService } from '../../../core/services/auth.service';
+import { environment } from '../../../../environments/environment';
 
-/**
- * Controller layer for the employee domain: owns canonical in-memory state and
- * exposes reactive streams so that View components never write data directly.
- *
- * Acts as the MVC Controller in the Angular SPA: mutations flow through this
- * service, which then pushes updated snapshots via BehaviorSubject to all
- * subscribed views.
- */
 @Injectable({ providedIn: 'root' })
 export class EmployeeService {
 
   private data: Employee[] = [];
-  private apiUrl = 'http://localhost:8080/employees';
+  private apiUrl = `${environment.apiUrl}/employees`;
+  private registerUrl = `${environment.apiUrl}/register`;
   private _currentPage = 1;
   private _totalPages = 1;
 
@@ -25,8 +19,6 @@ export class EmployeeService {
   get total() { return this._totalPages; }
 
   private dataSubject = new BehaviorSubject<Employee[]>(this.data);
-
-  /** Live stream subscribed by View components; emits the full list on every mutation. */
   data$: Observable<Employee[]> = this.dataSubject.asObservable();
 
   constructor(private http: HttpClient, private authService: AuthService) { }
@@ -39,9 +31,12 @@ export class EmployeeService {
     });
   }
 
-  /** Pushes a copy of the current array to subscribers, triggering change detection. */
   private refresh(): void {
     this.dataSubject.next([...this.data]);
+  }
+
+  private invalidate(): void {
+    this.data = [];
   }
 
   getAll(): Observable<Employee[]> {
@@ -51,8 +46,6 @@ export class EmployeeService {
   getLatestEmployees(page: number = 1): Observable<Employee[]> {
     return this.http.get<any>(`${this.apiUrl}?page=${page}`, { headers: this.getHeaders() }).pipe(
       map(response => {
-        console.log(response)
-        console.log(response.page_count)
         const list = response._embedded?.employees || [];
         this.data = list;
         this._currentPage = response.page || page;
@@ -63,17 +56,13 @@ export class EmployeeService {
     );
   }
 
-  private invalidate(): void {
-    this.data = [];
-  }
-
   getById(id: number): Observable<Employee> {
     return this.http.get<Employee>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() });
   }
 
   register(employeeData: Employee): Observable<any> {
     const { id_employee, ...payload } = employeeData;
-    return this.http.post<any>('http://localhost:8080/register', payload, { headers: this.getHeaders() }).pipe(
+    return this.http.post<any>(this.registerUrl, payload, { headers: this.getHeaders() }).pipe(
       tap(() => { this.invalidate(); this.getLatestEmployees().subscribe(); })
     );
   }
