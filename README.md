@@ -116,8 +116,18 @@ Proyecto_SGT-por-Angular/
 │       │       │   ├── guards/          # auth.guard.ts — protección de rutas
 │       │       │   ├── interceptors/    # auth.interceptor.ts — adjunta el token JWT
 │       │       │   └── services/        # auth, nav, qr, report services
+│       │       ├── layouts/             # Layouts por rol
+│       │       │   ├── admin-layout/    # Navegación completa (admin)
+│       │       │   └── driver-layout/   # Navegación reducida (conductor)
+│       │       ├── shared/              # Componentes y utilidades reutilizables
+│       │       │   └── components/
+│       │       │       ├── qr-modal/    # Modal genérico de QR (empleados, transportes, viajes)
+│       │       │       ├── table/       # Tabla genérica con búsqueda y paginación
+│       │       │       ├── top-menu/    # Barra superior con botón de cierre de sesión
+│       │       │       ├── fixed-url/   # Estrategia de URL fija (FixedLocationStrategy)
+│       │       │       └── spa-routing/ # StartPageComponent — redirección inicial por rol
 │       │       └── features/            # Módulos funcionales por dominio
-│       │           ├── auth/            # Login (flujo OAuth2)
+│       │           ├── login/           # Login (flujo OAuth2)
 │       │           ├── dashboard/       # Página principal con métricas
 │       │           ├── employes/        # CRUD de empleados
 │       │           │   ├── components/  # employee-form
@@ -135,7 +145,6 @@ Proyecto_SGT-por-Angular/
 │       │           │   ├── pages/       # trips-list, trips-detail
 │       │           │   └── services/    # trips.ts
 │       │           └── logistics/       # Dashboard logístico
-│       │               ├── models/      # logistics.ts
 │       │               ├── pages/       # logistics-dashboard
 │       │               └── services/    # logistics.ts
 │       ├── angular.json
@@ -215,18 +224,18 @@ El sistema implementa el flujo **OAuth2 Password Grant** respaldado por Laminas 
 
 ## Generación de Códigos QR
 
-El sistema genera un código QR único por cada viaje registrado. El QR codifica la URL del endpoint REST del backend correspondiente al viaje (`http://localhost:8080/trips/{id_trip}`), de modo que al escanearlo se accede directamente al recurso del viaje a través de la API.
+El sistema genera un código QR único por cada registro de **Empleados**, **Transportes** y **Viajes**. El componente `QrModalComponent` es compartido y puede usarse con cualquier entidad. El `QrService` solicita el QR al endpoint `GET /qr/:entity/:id` del backend; si la llamada falla, genera el código en el cliente con la librería `qrcode` apuntando a la URL del frontend (`http://localhost:4200/app/admin/:entity/:id`).
 
 ### Flujo de uso
 
-1. El usuario navega a **Viajes** (`/trips`).
+1. El usuario navega a la lista de **Empleados**, **Transportes** o **Viajes**.
 2. En la tabla, cada fila tiene el botón **QR**.
-3. Al pulsarlo, `TableComponent` emite el evento `qr` con los datos del viaje.
-4. `TripsListComponent` recibe el evento, guarda el viaje seleccionado y activa `showQrModal = true`.
-5. Se renderiza `<app-qr-modal>`, que en su `ngOnInit` llama a `QrService.generateTripQr(id_trip)`.
-6. `QrService` importa dinámicamente `qrcode`, construye la URL `http://localhost:8080/trips/{id}` y devuelve el Data URL del QR.
+3. Al pulsarlo, `TableComponent` emite el evento `qr` con los datos del registro seleccionado.
+4. El `ListComponent` correspondiente recibe el evento y activa `showQrModal = true`.
+5. Se renderiza `<app-qr-modal>`, que en su `ngOnInit` llama a `QrService.generateQr(entity, id)`.
+6. `QrService` llama a `GET /qr/:entity/:id` con el token Bearer; si la respuesta incluye `data_url`, la usa directamente. En caso de error, genera el QR en el cliente con `qrcode`.
 7. El modal muestra el QR como imagen y ofrece descargarlo como PNG.
-8. En la vista de detalle del viaje, el QR se genera automáticamente al cargar la página.
+8. En la vista de detalle de cada entidad, el QR se genera automáticamente al cargar la página.
 
 ---
 
@@ -259,7 +268,7 @@ En el backend, el módulo `employees` expone el endpoint REST `/employees[/:empl
 
 ## Reportes en formato PDF y hoja de cálculo
 
-El sistema genera reportes descargables en dos formatos desde las vistas de lista de **Empleados** y **Viajes**:
+El sistema genera reportes descargables en dos formatos desde las vistas de lista de **Empleados**, **Transportes**, **Viajes** y **Logística**:
 
 - **PDF** — producido con `jsPDF` + `jspdf-autotable`. El documento se genera en orientación horizontal, incluye título, fecha/hora de generación en español (locale `es-MX`) y una tabla con encabezado oscuro, filas alternas en gris claro y formato de moneda automático (MXN) para columnas que contengan `cost`, `income`, `salary` o `fuelcost` en su nombre de campo.
 - **Excel (.xlsx)** — producido con SheetJS (`xlsx`). Se construye un libro con una hoja llamada `Datos`, las columnas llevan los encabezados legibles (no los nombres de campo internos) y el ancho de cada columna se ajusta automáticamente al mayor entre la longitud del encabezado y 15 caracteres.
@@ -272,7 +281,7 @@ Toda la lógica de generación se centraliza en un único `ReportService` inyect
 
 ### Flujo de uso
 
-1. El usuario navega a la lista de **Empleados** o **Viajes** y, opcionalmente, escribe en el buscador para filtrar los registros.
+1. El usuario navega a la lista de **Empleados**, **Transportes**, **Viajes** o al dashboard de **Logística** y, opcionalmente, escribe en el buscador para filtrar los registros.
 2. Pulsa el botón **📄 PDF** o **📊 Excel** de la barra de filtros.
 3. El componente llama a `reportService.exportToPdf(this.filtered, ...)` o `exportToExcel(this.filtered, ...)`, pasando sólo los registros visibles tras el filtro.
 4. `ReportService` ejecuta `await import('jspdf')` / `await import('xlsx')` — la librería se descarga bajo demanda si aún no está en caché del navegador.
@@ -359,6 +368,12 @@ Authorization: Bearer <token>
 | Método | Endpoint | Descripción |
 |---|---|---|
 | `GET` | `/logistics` | Obtener datos del dashboard logístico |
+
+### Códigos QR
+
+| Método | Endpoint | Descripción |
+|---|---|---|
+| `GET` | `/qr/:entity/:id` | Generar código QR para una entidad (`employees`, `transport`, `trips`) por ID |
 
 ---
 

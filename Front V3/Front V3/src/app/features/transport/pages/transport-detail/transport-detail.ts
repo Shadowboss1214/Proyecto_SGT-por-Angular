@@ -78,11 +78,21 @@ export class TransportDetailComponent implements OnInit {
     }
   }
 
+  /**
+   * Generates the QR code asynchronously; silently ignores errors so QR failure
+   * does not block the rest of the detail view from rendering.
+   * @param entity - Resource type string (e.g. `'transport'`).
+   * @param id - Primary key of the transport unit.
+   */
   private async loadQr(entity: string, id: number) {
     try { this.qrDataUrl = await this.qrService.generateQr(entity, id); } catch { }
     this.cdr.detectChanges();
   }
 
+  /**
+   * Triggers a browser download of the transport's QR image as a PNG file.
+   * No-op if the QR has not yet been generated.
+   */
   downloadQr() {
     if (!this.qrDataUrl || !this.transport) return;
     const a = document.createElement('a');

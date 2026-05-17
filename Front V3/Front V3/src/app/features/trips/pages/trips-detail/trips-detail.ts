@@ -19,6 +19,18 @@ import { NavigationService } from '../../../../core/services/nav.service';
   templateUrl: './trips-detail.html',
   styleUrl: './trips-detail.css',
 })
+/**
+ * Detail component for a single trip record.
+ *
+ * Handles three operating modes determined by the current URL:
+ * - Read-only view (`/:id`)
+ * - Edit mode (`/:id/edit`)
+ * - Create mode (`/new`)
+ *
+ * Joins transport, employee, and route data so the template can display human-readable
+ * names instead of raw foreign keys. All three lookups are resolved cache-first via
+ * `forkJoin` to avoid redundant HTTP calls.
+ */
 export class TripsDetailComponent implements OnInit {
 
   private route            = inject(ActivatedRoute);
@@ -45,6 +57,13 @@ export class TripsDetailComponent implements OnInit {
   isEdit  = false;
   loading = false;
 
+  /**
+   * Resolves the operating mode from the URL segments, then loads the trip together
+   * with its related transport and employee records.
+   *
+   * Uses the service caches when all three are warm; falls back to `forkJoin` when
+   * any cache is cold. Only shows the loading spinner in the network-fetch path.
+   */
   ngOnInit() {
     const id  = this.route.snapshot.paramMap.get('id');
     const url = this.route.snapshot.url.map(s => s.path);
@@ -94,20 +113,45 @@ export class TripsDetailComponent implements OnInit {
     }
   }
 
+  /**
+   * Generates the QR code asynchronously; silently ignores errors so a QR failure
+   * does not block the rest of the detail view from rendering.
+   * @param id - Primary key of the trip.
+   */
   private async loadQr(id: number) {
     try { this.qrDataUrl = await this.qrService.generateQr('trips', id); } catch { }
     this.cdr.detectChanges();
   }
 
+  /**
+   * Resolves the transport name from the loaded list; falls back to `"ID {id}"` when
+   * the transport record is not yet in memory.
+   * @param id - Foreign key `id_transport` from the trip record.
+   * @returns Human-readable transport name or a fallback string.
+   */
   getTransportName(id: number): string {
     return this.transports.find(t => t.id_transport === id)?.name ?? `ID ${id}`;
   }
 
+  /**
+   * Resolves the driver's full name from the loaded employee list; concatenates
+   * `name` and `lastName`, trimming trailing whitespace when `lastName` is absent.
+   * Falls back to `"ID {id}"` when the employee record is not in memory.
+   * @param id - Foreign key `id_employee` from the trip record.
+   * @returns Full name string or a fallback string.
+   */
   getEmployeeName(id: number): string {
     const e = this.employees.find(emp => emp.id_employee === id);
     return e ? `${e.name} ${e.lastName ?? ''}`.trim() : `ID ${id}`;
   }
 
+  /**
+   * Resolves the route description from the static `tripRoutes` list.
+   * Returns a formatted string `"Origin → Destination (distance km)"` or
+   * `"ID {id}"` when the route ID is not in the static table.
+   * @param id - Foreign key `id_route` from the trip record.
+   * @returns Formatted route description or a fallback string.
+   */
   getRouteName(id: number): string {
     const r = this.tripRoutes.find(r => r.id_route === id);
     return r ? `${r.origin} → ${r.destine} (${r.distance} km)` : `ID ${id}`;
@@ -121,6 +165,10 @@ export class TripsDetailComponent implements OnInit {
     a.click();
   }
 
+  /**
+   * Deletes the trip with the given ID and navigates back to the list.
+   * @param id - String representation of the trip's primary key.
+   */
   delete(id: string) {
     this.service.delete(+id).subscribe(() => this.nav.navigate(['/trips']));
   }

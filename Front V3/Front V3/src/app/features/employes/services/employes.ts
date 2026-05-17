@@ -47,10 +47,18 @@ export class EmployeeService {
   /** Synchronous snapshot of the current cached list. Empty array if nothing loaded yet. */
   get snapshot(): Employee[] { return [...this.data]; }
 
+  /** Returns the live employee stream backed by `BehaviorSubject`. */
   getAll(): Observable<Employee[]> {
     return this.data$;
   }
 
+  /**
+   * Fetches a page of employees from the API, replaces the internal cache, and
+   * updates the pagination counters. Pushes the result to all `data$` subscribers
+   * via `refresh()` so views update without re-subscribing.
+   * @param page - 1-based page number (defaults to 1).
+   * @returns Observable emitting the fetched page as a plain array.
+   */
   getLatestEmployees(page: number = 1): Observable<Employee[]> {
     return this.http.get<any>(`${this.apiUrl}?page=${page}`, { headers: this.getHeaders() }).pipe(
       map(response => {
@@ -66,16 +74,30 @@ export class EmployeeService {
     );
   }
 
+  /**
+   * Clears the in-memory cache so the next `getLatestEmployees()` call hits the network.
+   * Called automatically after every mutation (create, update, delete).
+   */
   private invalidate(): void {
     this.data = [];
   }
 
+  /**
+   * Returns the cached employee if present; otherwise fetches from the API.
+   * @param id - Primary key of the employee.
+   */
   getById(id: number): Observable<Employee> {
     const hit = this.data.find(e => e.id_employee === id);
     if (hit) return of(hit);
     return this.http.get<Employee>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() });
   }
 
+  /**
+   * Creates an employee via the `/register` endpoint, which also provisions an
+   * `oauth_users` row. Use this for onboarding new employees who need system access.
+   * After completion the cache is invalidated and the first page is re-fetched.
+   * @param employeeData - Full employee record; `id_employee` is stripped before sending.
+   */
   register(employeeData: Employee): Observable<any> {
     const { id_employee, ...payload } = employeeData;
     return this.http.post<any>('http://localhost:8080/register', payload, { headers: this.getHeaders() }).pipe(
@@ -83,6 +105,11 @@ export class EmployeeService {
     );
   }
 
+  /**
+   * Creates an employee record via the `/employees` endpoint without creating OAuth
+   * credentials. Use `register()` instead when the employee also needs login access.
+   * @param employeeData - Full employee record; `id_employee` is stripped before sending.
+   */
   create(employeeData: Employee): Observable<any> {
     const { id_employee, ...payload } = employeeData;
     return this.http.post<any>(this.apiUrl, payload, { headers: this.getHeaders() }).pipe(
@@ -90,12 +117,21 @@ export class EmployeeService {
     );
   }
 
+  /**
+   * Updates an employee record via PUT and invalidates the cache afterwards.
+   * @param id - Primary key of the employee to update.
+   * @param employeeData - Updated employee record sent as the request body.
+   */
   update(id: number, employeeData: Employee): Observable<any> {
     return this.http.put<any>(`${this.apiUrl}/${id}`, employeeData, { headers: this.getHeaders() }).pipe(
       tap(() => { this.invalidate(); this.getLatestEmployees().subscribe(); })
     );
   }
 
+  /**
+   * Deletes an employee by ID and invalidates the cache so the list refreshes.
+   * @param id - Primary key of the employee to delete.
+   */
   delete(id: number): Observable<any> {
     return this.http.delete<any>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() }).pipe(
       tap(() => { this.invalidate(); this.getLatestEmployees().subscribe(); })

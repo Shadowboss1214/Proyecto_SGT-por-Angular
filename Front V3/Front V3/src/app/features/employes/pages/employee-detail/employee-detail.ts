@@ -14,6 +14,17 @@ import { QrService } from '../../../../core/services/qr.service';
   templateUrl: './employee-detail.html',
   styleUrl: './employee-detail.css',
 })
+/**
+ * Detail component for a single employee record.
+ *
+ * Handles three operating modes determined by the current URL:
+ * - Read-only view (`/:id`)
+ * - Edit mode (`/:id/edit`)
+ * - Create mode (`/new`)
+ *
+ * Data is resolved cache-first from EmployeeService to avoid redundant HTTP calls
+ * when navigating back from the list.
+ */
 export class EmployeeDetailComponent implements OnInit {
 
   private route     = inject(ActivatedRoute);
@@ -27,6 +38,13 @@ export class EmployeeDetailComponent implements OnInit {
   loading  = false;
   qrDataUrl: string | null = null;
 
+  /**
+   * Resolves the operating mode from the URL segments and loads employee data.
+   *
+   * Checks the service cache before going to the network; only shows the loading
+   * spinner when a network request is actually needed. Queues QR code generation
+   * after the employee record is available.
+   */
   ngOnInit() {
     const id  = this.route.snapshot.paramMap.get('id');
     const url = this.route.snapshot.url.map(s => s.path);
@@ -60,11 +78,21 @@ export class EmployeeDetailComponent implements OnInit {
     }
   }
 
+  /**
+   * Generates the QR code asynchronously; silently ignores errors because QR
+   * failure should not block the rest of the detail view from rendering.
+   * @param entity - Resource type string used by QrService (e.g. `'employee'`).
+   * @param id - Primary key of the employee.
+   */
   private async loadQr(entity: string, id: number) {
     try { this.qrDataUrl = await this.qrService.generateQr(entity, id); } catch { }
     this.cdr.detectChanges();
   }
 
+  /**
+   * Triggers a browser download of the employee's QR image as a PNG file.
+   * No-op if the QR has not yet been generated.
+   */
   downloadQr() {
     if (!this.qrDataUrl || !this.employee) return;
     const a = document.createElement('a');
@@ -73,6 +101,10 @@ export class EmployeeDetailComponent implements OnInit {
     a.click();
   }
 
+  /**
+   * Deletes the employee with the given ID and navigates back to the list.
+   * @param id - String representation of the employee's primary key.
+   */
   delete(id: string) {
     this.service.delete(Number(id)).subscribe(() => this.router.navigate(['/employee']));
   }

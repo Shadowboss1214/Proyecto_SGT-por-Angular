@@ -62,6 +62,10 @@ export class TransportListComponent implements OnInit {
     { label: 'Consumo combustible',  field: 'fuelconsumption' }
   ];
 
+  /**
+   * Restores the list from the service cache if it was already loaded (e.g. navigating
+   * back from a detail page); otherwise fetches the first page from the API.
+   */
   ngOnInit() {
     if (this.service.snapshot.length > 0) {
       this.transports = this.service.snapshot;
@@ -116,6 +120,7 @@ export class TransportListComponent implements OnInit {
    * @param value - New search term entered by the user
    */
   onSearchChange(v: string) { this.search = v; }
+  /** Updates the status filter used by the `filtered` getter. */
   onStatusChange(v: string) { this.statusFilter = v; }
 
   /**
@@ -134,6 +139,7 @@ export class TransportListComponent implements OnInit {
   onQr(item: any) { this.selectedTransport = item; this.showQrModal = true; }
   onQrClose()     { this.showQrModal = false; this.selectedTransport = null; }
 
+  /** Advances to the requested page and triggers a network fetch. */
   changePage(page: number) {
     this.currentPage = page;
     this.loadTransports(page);
