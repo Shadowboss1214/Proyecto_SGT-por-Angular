@@ -16,8 +16,6 @@ WORKDIR /app
 
 COPY . .
 
-RUN ls -la config/autoload/
-
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-intl
@@ -28,4 +26,5 @@ RUN mkdir -p data/cache && chmod -R 777 data/cache
 
 EXPOSE 8080
 
-CMD ["php", "-S", "0.0.0.0:8080", "-t", "public"]
+# Al iniciar el contenedor: genera local.php y las llaves desde variables de entorno, luego levanta el servidor
+CMD ["sh", "-c", "php scripts/generate-config.php && php -S 0.0.0.0:8080 -t public"]
