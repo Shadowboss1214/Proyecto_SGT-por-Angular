@@ -1,8 +1,12 @@
 export interface Employee {
-  id_employee: number; // Coincide con SERIAL PRIMARY KEY
+  /** Primary key; maps to `id_employee SERIAL PRIMARY KEY` in Supabase. */
+  id_employee: number;
+  /** Full name of the employee. */
   name: string;
+  /** Monthly salary in the configured currency unit. */
   salary: number;
-  // Si estos no están en la DB pero los necesitas en el Front, úsalos como opcionales:
+  /** Job title for display; not stored in the database — derived from `role` when needed. */
   position?: string;
+  /** Denormalized trip counter for dashboard widgets; not persisted in the database. */
   tripsCompleted?: number;
 }

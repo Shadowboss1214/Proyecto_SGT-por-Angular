@@ -1,27 +1,45 @@
 import { Injectable } from '@angular/core';
 
+/** Shared column descriptor used by both exportToPdf and exportToExcel. */
 export interface ReportColumn {
+  /** Translated header text shown in the PDF/Excel column header. */
   label: string;
+  /** Object property key used to read the cell value from each data row. */
   field: string;
 }
 
+/**
+ * Central export service: generates downloadable PDF and Excel reports from
+ * any filtered dataset without server involvement.
+ *
+ * Both methods use dynamic import so jsPDF, jspdf-autotable, and SheetJS are
+ * excluded from the initial bundle and fetched on demand only when the user
+ * triggers an export for the first time. Currency formatting is applied
+ * automatically to any numeric field whose name matches /cost|income|salary|fuelcost/i,
+ * so callers do not need to pre-format values before passing the data array.
+ */
 @Injectable({
   providedIn: 'root'
 })
 export class ReportService {
 
   /**
-   * Exporta datos a PDF usando jsPDF + autoTable.
-   * Requiere: npm install jspdf jspdf-autotable
+   * Generates a landscape PDF report with title, generation timestamp, and a styled
+   * autoTable, then triggers a browser download.
+   *
+   * Numeric fields whose names match /cost|income|salary|fuelcost/i are formatted
+   * as MXN currency automatically. The output filename is derived from `title` with
+   * spaces replaced by underscores and a YYYYMMdd_HHmm suffix to prevent collisions.
+   * @param data - Records to export; only the fields referenced in `columns` are used.
+   * @param columns - Column definitions that drive both table headers and field extraction.
+   * @param title - Report heading displayed at the top and used as the filename base.
    */
   async exportToPdf(data: any[], columns: ReportColumn[], title: string): Promise<void> {
-    // Importación dinámica para no aumentar el bundle inicial
     const { default: jsPDF } = await import('jspdf');
     const autoTable = (await import('jspdf-autotable')).default;
 
     const doc = new jsPDF({ orientation: 'landscape' });
 
-    // Encabezado del documento
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
     doc.text(title, 14, 18);
@@ -31,13 +49,11 @@ export class ReportService {
     doc.setTextColor(100);
     doc.text(`Generado: ${new Date().toLocaleString('es-MX')}`, 14, 25);
 
-    // Construir encabezados y filas para autoTable
     const head = [columns.map(c => c.label)];
     const body = data.map(row =>
       columns.map(col => {
         const val = row[col.field];
         if (val === null || val === undefined) return '';
-        // Formatear números como moneda si el campo contiene cost, income, salary, etc.
         if (typeof val === 'number' && /cost|income|salary|fuelcost/i.test(col.field)) {
           return val.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
         }
@@ -54,7 +70,7 @@ export class ReportService {
         cellPadding: 3,
       },
       headStyles: {
-        fillColor: [30, 41, 59],   // #1e293b
+        fillColor: [30, 41, 59],    // #1e293b
         textColor: [255, 255, 255],
         fontStyle: 'bold',
       },
@@ -69,13 +85,20 @@ export class ReportService {
   }
 
   /**
-   * Exporta datos a Excel (.xlsx) usando SheetJS (xlsx).
-   * Requiere: npm install xlsx
+   * Generates an .xlsx workbook with a single sheet named "Datos" and triggers a
+   * browser download via SheetJS writeFile.
+   *
+   * Column headers use `col.label` (the readable display name) rather than the
+   * internal field key so the spreadsheet is self-explanatory without the source code.
+   * Column widths are set to max(label.length, 15) characters to prevent header truncation.
+   * The filename receives a YYYYMMdd_HHmm suffix to prevent collisions.
+   * @param data - Records to export.
+   * @param columns - Column definitions that drive header names and field extraction.
+   * @param filename - Base for the output filename, without extension or timestamp.
    */
   async exportToExcel(data: any[], columns: ReportColumn[], filename: string): Promise<void> {
     const XLSX = await import('xlsx');
 
-    // Construir array de objetos con los encabezados legibles
     const rows = data.map(row => {
       const mapped: Record<string, any> = {};
       columns.forEach(col => {
@@ -86,7 +109,6 @@ export class ReportService {
 
     const ws = XLSX.utils.json_to_sheet(rows);
 
-    // Ajustar ancho de columnas automáticamente
     const colWidths = columns.map(col => ({
       wch: Math.max(col.label.length, 15)
     }));
@@ -99,6 +121,7 @@ export class ReportService {
     XLSX.writeFile(wb, fullFilename);
   }
 
+  /** Returns a YYYYMMdd_HHmm string used to suffix output filenames and prevent collisions. */
   private _timestamp(): string {
     const now = new Date();
     return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;

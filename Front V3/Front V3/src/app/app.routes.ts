@@ -9,6 +9,20 @@ import { StartPageComponent } from './shared/components/spa-routing/start-routin
 import { authGuard } from './core/guards/auth.guard';
 
 
+/**
+ * Root routing table — equivalent to the Front Controller in classic MVC.
+ *
+ * Uses lazy loading for every feature module to keep the initial bundle minimal.
+ * Protected layouts (admin, driver) are guarded by authGuard, which validates
+ * token existence and JWT expiration before allowing navigation.
+ *
+ * Structure:
+ *   /                  → StartPageComponent (redirects based on stored role)
+ *   /app/login         → LoginComponent (unauthenticated)
+ *   /app/admin/**      → AdminLayout (requires valid admin token)
+ *   /app/driver/**     → DriverLayout (requires valid driver token)
+ *   **                 → redirectTo ''
+ */
 export const routes: Routes = [
 
   {

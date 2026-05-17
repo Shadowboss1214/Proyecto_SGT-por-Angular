@@ -13,6 +13,14 @@ import { AuthService } from '../../../login';
 import { ReportService } from '../../../../core/services/report.service';
 import { QrModalComponent } from '../../../../shared/components/qr-modal/qr-modal';
 
+/**
+ * View component for the trip list screen (/app/admin/trips and /app/driver/trips).
+ *
+ * Combines three reactive streams (trips, transports, employees) via combineLatest
+ * to build a denormalized view model for the generic table. For the driver role,
+ * filters trips to only those assigned to the authenticated employee. Also
+ * orchestrates the QR modal lifecycle via showQrModal and selectedTrip state.
+ */
 @Component({
   selector: 'app-Trips-list',
   standalone: true,
@@ -30,12 +38,18 @@ export class TripsListComponent implements OnInit {
   private authService = inject(AuthService);
   private reportService = inject(ReportService);
 
+  /** Current user role, read from route data to determine visibility and filtering rules. */
   role = this.route.pathFromRoot
     .map(r => r.snapshot.data['role'])
     .find(role => !!role) as 'admin' | 'driver';
 
+  /** Local cache of employees, populated from EmployeeService stream on init. */
   employes: Employee[] = [];
+
+  /** Local cache of transports, populated from TransportService stream on init. */
   transport: Transport[] = [];
+
+  /** Static route catalog; used to resolve route labels from FK values in trip records. */
   tripRoute: Route[] = [
     { id_route: 1, origin: 'Ciudad de México', destine: 'Guadalajara', distance: 541 },
     { id_route: 2, origin: 'Guadalajara', destine: 'Monterrey', distance: 742 },
@@ -46,6 +60,8 @@ export class TripsListComponent implements OnInit {
 
   search = '';
   statusFilter = '';
+
+  /** Raw trip array; scoped to the authenticated driver when role === 'driver'. */
   Trips: Trip[] = [];
 
   columns = [
@@ -57,8 +73,14 @@ export class TripsListComponent implements OnInit {
     { label: 'Fecha', field: 'date' }
   ];
 
+  /** Denormalized view model: trips with resolved names injected for display in the table. */
   tripsView: any[] = [];
 
+  /**
+   * Subscribes to all three service streams simultaneously so the table rebuilds
+   * whenever any of trips, transports, or employees changes.
+   * Driver role filtering uses the employee ID embedded in the JWT payload.
+   */
   ngOnInit() {
     combineLatest([
       this.service.getAll(),
@@ -84,32 +106,53 @@ export class TripsListComponent implements OnInit {
     });
   }
 
+  /** Navigates to the trip detail view. @param item - The trip row clicked. */
   onView(item: Trip) {
     this.router.navigate(['/trips', item.id_trip]);
   }
 
+  /** Navigates to the trip edit form. @param item - The trip row clicked. */
   onEdit(item: Trip) {
     this.router.navigate(['/trips', item.id_trip, 'edit']);
   }
 
+  /** Delegates deletion to TripService. @param item - The trip row to delete. */
   onDelete(item: Trip) {
     this.service.delete(item.id_trip);
   }
 
+  /**
+   * Resolves a transport name from the local cache by FK.
+   * Returns 'N/A' when not found — defensive because the list may load before
+   * the transport service emits its first value.
+   * @param id - The `id_transport` FK value.
+   */
   getTransportName(id: number) {
     return this.transport.find(t => t.id_transport === id)?.name ?? 'N/A';
   }
 
+  /**
+   * Resolves an employee name from the local cache by FK.
+   * @param id - The `id_employee` FK value.
+   */
   getEmployeeName(id: number) {
     return this.employes.find(e => e.id_employee === id)?.name ?? 'N/A';
   }
 
+  /**
+   * Resolves a route label ("origin - destine") from the static route list by FK.
+   * @param id - The `id_route` FK value.
+   */
   getRouteName(id: number) {
     const route = this.tripRoute.find(r => r.id_route === id);
     if (!route) return 'N/A';
     return `${route.origin} - ${route.destine}`;
   }
 
+  /**
+   * Client-side filter over the denormalized tripsView; matches transport or employee name.
+   * No server round-trip; reflects the latest search value immediately.
+   */
   get filtered() {
     const search = this.search.toLowerCase();
     return this.tripsView.filter(t =>
@@ -118,30 +161,42 @@ export class TripsListComponent implements OnInit {
     );
   }
 
+  /** Syncs the search term from the template's input binding. */
   onSearchChange(value: string) {
     this.search = value;
   }
 
+  /** Syncs the status filter; kept for interface parity with other list views. */
   onStatusChange(value: string) {
     this.statusFilter = value;
   }
 
+  /** Exports the current filtered list as a PDF report via ReportService. */
   exportPdf(): void {
     this.reportService.exportToPdf(this.filtered, this.columns, 'Reporte de Viajes');
   }
 
+  /** Exports the current filtered list as an Excel workbook via ReportService. */
   exportExcel(): void {
     this.reportService.exportToExcel(this.filtered, this.columns, 'reporte_viajes.xlsx');
   }
 
+  /** Controls QR modal visibility; true while the modal is open. */
   showQrModal = false;
+
+  /** The trip row currently selected for QR display; passed to QrModalComponent via @Input. */
   selectedTrip: any = null;
 
+  /**
+   * Opens the QR modal for the selected trip row.
+   * @param item - The trip row whose QR code the user wants to see.
+   */
   onQr(item: any) {
     this.selectedTrip = item;
     this.showQrModal = true;
   }
 
+  /** Resets QR modal state after the user dismisses it. */
   onQrClose() {
     this.showQrModal = false;
     this.selectedTrip = null;

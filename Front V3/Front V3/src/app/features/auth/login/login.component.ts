@@ -4,31 +4,43 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
+/**
+ * View component for the authentication screen (/app/login).
+ *
+ * Owns the reactive login form and orchestrates the OAuth2 exchange via AuthService.
+ * Navigates to the role-appropriate layout after a successful login; never stores
+ * the token or the role directly — those responsibilities belong to AuthService
+ * and localStorage respectively.
+ */
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [ReactiveFormsModule, CommonModule],
   templateUrl: './login.component.html',
-  styleUrl: './login.component.css' // Asegúrate de que este archivo exista aunque esté vacío
+  styleUrl: './login.component.css'
 })
 export class LoginComponent {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
 
-  // Definimos el formulario con validaciones básicas
   loginForm = this.fb.group({
     username: ['', [Validators.required]],
     password: ['', [Validators.required]]
   });
 
+  /**
+   * Submits credentials to AuthService when the form is valid.
+   *
+   * Precondition: both username and password fields must satisfy Validators.required.
+   * On success: the access token is persisted via AuthService.saveToken() and the
+   * user navigates to /admin or /driver based on the role returned by the backend.
+   * On failure: an alert is shown and the user remains on the login screen.
+   */
   onSubmit() {
     if (this.loginForm.valid) {
-      // Aquí ya tienes los valores extraídos del formulario
       const { username, password } = this.loginForm.value;
 
-      // DEBES QUITAR EL 'this.' porque son constantes locales, no propiedades de la clase
-      // También agregamos el "!" o aseguramos que no sean nulos para TS
       this.authService.login({
         username: username!,
         password: password!
@@ -37,7 +49,6 @@ export class LoginComponent {
           this.authService.saveToken(response.access_token);
           console.log('¡Login exitoso!', response);
 
-          // Lógica de redirección por roles (como la teníamos antes)
           this.authService.getEmployeeByUsername(username!, response.access_token).subscribe({
             next: (data: any) => {
               const employees = data._embedded?.employees;
