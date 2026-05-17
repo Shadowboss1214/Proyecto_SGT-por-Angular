@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
-import { Router } from '@angular/router';
+import { NavigationService } from '../../../core/services/nav.service';
 import { CommonModule } from '@angular/common';
 
 /**
@@ -22,7 +22,7 @@ import { CommonModule } from '@angular/common';
 export class LoginComponent {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
-  private router = inject(Router);
+  private router = inject(NavigationService);
 
   loginForm = this.fb.group({
     username: ['', [Validators.required]],
@@ -57,13 +57,13 @@ export class LoginComponent {
               if (currentEmployee?.role === 'ADMIN') {
                 const userRole = 'admin'
                 localStorage.setItem('role', userRole);
-                this.router.navigate(['/admin'],
+                this.router.navigate([''],
                   { skipLocationChange: true }
                 );
               } else {
                 const userRole = 'driver';
                 localStorage.setItem('role', userRole);
-                this.router.navigate(['/driver'],
+                this.router.navigate([''],
                   { skipLocationChange: true }
                 );
               }

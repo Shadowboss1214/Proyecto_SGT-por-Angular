@@ -1,6 +1,8 @@
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
+import { NavigationService } from '../services/nav.service';
 
 /**
  * Functional HTTP interceptor registered globally in app.config.ts.
@@ -11,17 +13,41 @@ import { AuthService } from '../services/auth.service';
  * stale or empty Bearer header.
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const authService = inject(AuthService);
-  const token = authService.getToken();
+  const auth = inject(AuthService);
+  const nav = inject(NavigationService);
+  const token = auth.getToken();
 
-  if (token) {
-    const authReq = req.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`
+  const authReq = token
+    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+    : req;
+
+  return next(authReq).pipe(
+    catchError((error: HttpErrorResponse) => {
+      // Evitar loop infinito: no reintentar si el request que falló es el de refresh
+      const isOAuthRequest = req.url.includes('/oauth');
+
+      if (error.status === 401 && !isOAuthRequest && auth.getRefreshToken()) {
+        return auth.refreshToken().pipe(
+          switchMap(response => {
+            const retryReq = req.clone({
+              setHeaders: { Authorization: `Bearer ${response.access_token}` }
+            });
+            return next(retryReq);
+          }),
+          catchError(() => {
+            auth.logout();
+            nav.navigate(['/app/login']);
+            return throwError(() => error);
+          })
+        );
       }
-    });
-    return next(authReq);
-  }
 
-  return next(req);
+      if (error.status === 401) {
+        auth.logout();
+        nav.navigate(['/app/login']);
+      }
+
+      return throwError(() => error);
+    })
+  );
 };

@@ -14,6 +14,11 @@ El sistema permite a administradores gestionar empleados, vehículos y viajes a 
 | Ivan Augusto Pérez Saldívar |
 | Arturo Cabrera              |
 
+### Base de datos
+| Tecnología | Detalle |
+|---|---|
+| PostgreSQL | Hosteado en Supabase |
+
 ---
 
 ## Ficha Técnica
@@ -448,3 +453,4 @@ erDiagram
   route ||--o{ trip : "id_route"
 ```
 ---
+

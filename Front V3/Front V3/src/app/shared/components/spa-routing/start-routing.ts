@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { NavigationService } from '../../../core/services/nav.service';
 
 /**
  * Templateless entry-point component that acts as the SPA's initial router.
@@ -18,7 +18,7 @@ import { Router } from '@angular/router';
 })
 export class StartPageComponent implements OnInit {
 
-  private router = inject(Router);
+  private router = inject(NavigationService);
 
   /**
    * Redirects immediately on init based on the token and role stored in localStorage.
@@ -33,18 +33,22 @@ export class StartPageComponent implements OnInit {
     const token = localStorage.getItem('access_token');
 
     if (!token) {
-      this.router.navigate(['/app/login'], { replaceUrl: true });
+      localStorage.removeItem('role');
+      console.log('sesion')
+      this.router.navigate(['/login'], { replaceUrl: true });
       return;
     }
 
+    
     const role = localStorage.getItem('role');
 
     if (role === 'ADMIN') {
-      this.router.navigate(['/app/admin/dashboard'], { replaceUrl: true });
+      this.router.navigate(['/dashboard'], { replaceUrl: true });
     } else if (role === 'DRIVER') {
-      this.router.navigate(['/app/driver/dashboard'], { replaceUrl: true });
+      this.router.navigate(['/dashboard'], { replaceUrl: true });
     } else {
-      this.router.navigate(['/app/login'], { replaceUrl: true });
+      localStorage.removeItem('role');
+      this.router.navigate(['/login'], { replaceUrl: true });
     }
   }
 

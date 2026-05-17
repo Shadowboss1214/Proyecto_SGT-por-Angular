@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { LoginRequest, TokenResponse } from '../../features/login/models/login';
 
 /**
@@ -11,13 +12,11 @@ import { LoginRequest, TokenResponse } from '../../features/login/models/login';
  * and components that need to know whether the user is authenticated must go through
  * this service and never read localStorage directly.
  */
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class AuthService {
 
-  private apiUrl = 'http://localhost:8080/oauth';
-  private employeesUrl = 'http://localhost:8080/employees';
+  private apiUrl      = 'http://localhost:8080/oauth';
+  private employeeUrl = 'http://localhost:8080/employees';
 
   constructor(private http: HttpClient) {}
 
@@ -36,12 +35,9 @@ export class AuthService {
     body.set('username', data.username);
     body.set('password', data.password);
     body.set('client_id', 'angular_app');
-
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/x-www-form-urlencoded'
+    return this.http.post<TokenResponse>(this.apiUrl, body.toString(), {
+      headers: new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' })
     });
-
-    return this.http.post<TokenResponse>(this.apiUrl, body.toString(), { headers });
   }
 
   /**
@@ -55,28 +51,65 @@ export class AuthService {
    * @returns Observable emitting the HAL+JSON employee collection from the backend.
    */
   getEmployeeByUsername(username: string, token: string): Observable<any> {
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`,
-      'Accept': 'application/json'
+    return this.http.get<any>(`${this.employeeUrl}?username=${username}`, {
+      headers: new HttpHeaders({ 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' })
     });
-    return this.http.get<any>(`${this.employeesUrl}?username=${username}`, { headers });
   }
 
-  /**
-   * Persists the JWT in localStorage so it survives page reloads.
-   * Postcondition: subsequent calls to getToken() return this value until logout() is called.
-   * @param token - The raw JWT string from the OAuth2 response.
-   */
-  saveToken(token: string) {
-    localStorage.setItem('access_token', token);
+  // ── Token storage ────────────────────────────────────────────
+  saveToken(token: string)        { localStorage.setItem('access_token', token); }
+  getToken(): string | null       { return localStorage.getItem('access_token'); }
+
+  saveRefreshToken(token: string) { localStorage.setItem('refresh_token', token); }
+  getRefreshToken(): string | null{ return localStorage.getItem('refresh_token'); }
+
+  saveRole(role: string)          { localStorage.setItem('role', role); }
+  saveEmployeeId(id: number)      { localStorage.setItem('employee_id', String(id)); }
+
+  // ── JWT helpers (works when token is JWT; falls back to localStorage) ───
+  getTokenPayload(): any {
+    const token = this.getToken();
+    if (!token) return null;
+    try {
+      return JSON.parse(atob(token.split('.')[1]));
+    } catch {
+      return null;
+    }
   }
 
-  /**
-   * Retrieves the stored JWT.
-   * @returns The token string, or null if the user is not authenticated or has logged out.
-   */
-  getToken() {
-    return localStorage.getItem('access_token');
+  isTokenExpired(): boolean {
+    const exp = this.getTokenPayload()?.exp;
+    if (!exp) return false;
+    return Date.now() / 1000 > exp;
+  }
+
+  getRole(): string {
+    const fromJwt = this.getTokenPayload()?.role;
+    if (fromJwt) return fromJwt.toLowerCase();
+    return (localStorage.getItem('role') ?? '').toLowerCase();
+  }
+
+  getEmployeeId(): string {
+    const fromJwt = this.getTokenPayload()?.employeeId;
+    if (fromJwt) return String(fromJwt);
+    return localStorage.getItem('employee_id') ?? '';
+  }
+
+  // ── Refresh token ────────────────────────────────────────────
+  refreshToken(): Observable<any> {
+    const token = this.getRefreshToken();
+    const body = new URLSearchParams();
+    body.set('grant_type', 'refresh_token');
+    body.set('refresh_token', token!);
+    body.set('client_id', 'angular_app');
+    return this.http.post<any>(this.apiUrl, body.toString(), {
+      headers: new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' })
+    }).pipe(
+      tap(response => {
+        this.saveToken(response.access_token);
+        if (response.refresh_token) this.saveRefreshToken(response.refresh_token);
+      })
+    );
   }
 
   /**
@@ -86,32 +119,7 @@ export class AuthService {
   logout() {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
-  }
-
-  /**
-   * Decodes the JWT payload without verifying the signature (server-side validation
-   * happens on every API call via the oauth2postgres adapter).
-   * Uses atob() for base64 decoding; returns null on any malformed input to avoid
-   * crashing guards or interceptors when the token is corrupted.
-   * @returns Parsed payload object, or null if the token is absent or malformed.
-   */
-  getTokenPayload(): any {
-    const token = this.getToken();
-    if (!token) return null;
-    try {
-      const payload = token.split('.')[1];
-      const decoded = atob(payload);
-      return JSON.parse(decoded);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  /**
-   * Convenience accessor for the employee ID embedded in the JWT payload.
-   * @returns The `employeeId` claim as a string, or an empty string if unavailable.
-   */
-  getEmployeeId(): string {
-    return this.getTokenPayload()?.employeeId || '';
+    localStorage.removeItem('role');
+    localStorage.removeItem('employee_id');
   }
 }

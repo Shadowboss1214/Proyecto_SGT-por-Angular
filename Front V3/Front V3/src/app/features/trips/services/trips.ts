@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 import { Trip } from '../models/trips';
+import { AuthService } from '../../../core/services/auth.service';
 
 /**
  * Controller layer for the trip domain: owns canonical in-memory state and
@@ -14,73 +17,74 @@ import { Trip } from '../models/trips';
 export class TripService {
 
   private data: Trip[] = [];
+  private apiUrl = 'http://localhost:8080/trips';
 
   private subject = new BehaviorSubject<Trip[]>(this.data);
 
   /** Live stream subscribed by View components; emits the full list on every mutation. */
   data$: Observable<Trip[]> = this.subject.asObservable();
+  private _currentPage = 1;
+  private _totalPages = 1;
 
-  /**
-   * Returns the live trip stream.
-   * Subscribers receive the current snapshot immediately, then all subsequent mutations.
-   * @returns Observable that never completes for the lifetime of the service.
-   */
-  getAll(): Observable<Trip[]> {
-    return this.data$;
-  }
+  get page() { return this._currentPage; }
+  get total() { return this._totalPages; }
 
-  /**
-   * Looks up a single trip by primary key in the local cache without a network call.
-   * @param id - The `id_trip` value to search for.
-   * @returns The matching Trip, or `undefined` if not cached.
-   */
-  getById(id: number): Trip | undefined {
-    return this.data.find(t => t.id_trip === id);
-  }
+  constructor(private http: HttpClient, private authService: AuthService) { }
 
-  /**
-   * Appends a new trip and notifies all subscribers.
-   * Assigns a temporary numeric ID (epoch seconds) to avoid collisions during the session;
-   * this ID must be replaced by the real Postgres SERIAL after backend persistence.
-   * @param tripData - Trip payload; any `id_trip` value is overwritten.
-   */
-  create(tripData: Trip): void {
-    const newTrip: Trip = {
-      ...tripData,
-      id_trip: Math.floor(Date.now() / 1000)
-    };
-
-    this.data.push(newTrip);
-    this.refresh();
-  }
-
-  /**
-   * Replaces the trip matching `id` with the supplied data, preserving the primary key.
-   * No-op if `id` is not found in the local cache.
-   * @param id - The `id_trip` of the record to update.
-   * @param tripData - New field values; `id_trip` is ignored and overridden.
-   */
-  update(id: number, tripData: Trip): void {
-    const index = this.data.findIndex(t => t.id_trip === id);
-
-    if (index !== -1) {
-      this.data[index] = { ...tripData, id_trip: id };
-      this.refresh();
-    }
-  }
-
-  /**
-   * Removes the trip matching `id` from local state.
-   * No-op if `id` is not found.
-   * @param id - The `id_trip` of the record to remove.
-   */
-  delete(id: number): void {
-    this.data = this.data.filter(t => t.id_trip !== id);
-    this.refresh();
+  private getHeaders(): HttpHeaders {
+    const token = this.authService.getToken();
+    return new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
   }
 
   /** Pushes a copy of the current array to subscribers, triggering change detection. */
   private refresh(): void {
     this.subject.next([...this.data]);
+  }
+
+  getAll(): Observable<Trip[]> {
+    return this.data$;
+  }
+
+  getLatestTrips(page: Number = 1): Observable<Trip[]> {
+    return this.http.get<any>(`${this.apiUrl}?page=${page}`, { headers: this.getHeaders() }).pipe(
+      map(response => {
+        const list = response._embedded?.trips || [];
+        this.data = list;
+        this._currentPage = response.page || page;
+        this._totalPages = response.page_count || 1;
+        this.refresh();
+        return [...list];
+      })
+    );
+  }
+
+  private invalidate(): void {
+    this.data = [];
+  }
+
+  getById(id: number): Observable<Trip> {
+    return this.http.get<Trip>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() });
+  }
+
+  create(tripData: Trip): Observable<any> {
+    const { id_trip, ...payload } = tripData;
+    return this.http.post<any>(this.apiUrl, payload, { headers: this.getHeaders() }).pipe(
+      tap(() => { this.invalidate(); this.getLatestTrips().subscribe(); })
+    );
+  }
+
+  update(id: number, tripData: Trip): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/${id}`, tripData, { headers: this.getHeaders() }).pipe(
+      tap(() => { this.invalidate(); this.getLatestTrips().subscribe(); })
+    );
+  }
+
+  delete(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() }).pipe(
+      tap(() => { this.invalidate(); this.getLatestTrips().subscribe(); })
+    );
   }
 }

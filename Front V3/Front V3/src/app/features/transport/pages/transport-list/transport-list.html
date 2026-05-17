@@ -8,15 +8,29 @@
         <option value="">Todos</option>
         <option value="Activo">Activo</option>
         <option value="Inactivo">Inactivo</option>
+        <option value="Mantenimiento">En Mantenimiento</option>
     </select>
 
     <button routerLink="new">Nuevo</button>
+
+    <button class="btn-export btn-pdf" (click)="exportPdf()" title="Exportar a PDF">
+        📄 PDF
+    </button>
+
+    <button class="btn-export btn-excel" (click)="exportExcel()" title="Exportar a Excel">
+        📊 Excel
+    </button>
 </div>
 
 <app-table 
+  [columns]="columns" 
   [data]="filtered"
-  [columns]="columns"
   (view)="onView($event)"
   (edit)="onEdit($event)"
-  (delete)="onDelete($event)">
+  (delete)="onDelete($event)"
+
+  [currentPage]="currentPage"
+  [totalPages]="totalPages"
+
+  (pageChange)="changePage($event)">
 </app-table>

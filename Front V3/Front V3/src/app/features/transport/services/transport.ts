@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Transport } from '../models/transport';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { map, tap } from 'rxjs/operators';
+import { AuthService } from '../../../core/services/auth.service';
 
 /**
  * Controller layer for the transport domain: owns canonical in-memory state and
@@ -16,11 +19,27 @@ import { Transport } from '../models/transport';
 export class TransportService {
 
   private data: Transport[] = [];
+  private apiUrl = 'http://localhost:8080/transport';
 
   private dataSubject = new BehaviorSubject<Transport[]>(this.data);
 
   /** Live stream subscribed by View components; emits the full list on every mutation. */
   data$: Observable<Transport[]> = this.dataSubject.asObservable();
+  private _currentPage = 1;
+  private _totalPages = 1;
+
+  get page() { return this._currentPage; }
+  get total() { return this._totalPages; }
+
+  constructor(private http: HttpClient, private authService: AuthService) {}
+
+  private getHeaders(): HttpHeaders {
+    const token = this.authService.getToken();
+    return new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+  }
 
   /**
    * Returns the live transport stream.
@@ -40,49 +59,47 @@ export class TransportService {
     return this.data.find(t => t.id_transport === id);
   }
 
-  /**
-   * Appends a new transport and notifies all subscribers.
-   * Assigns a temporary numeric ID (epoch seconds) to avoid collisions during the session;
-   * this ID must be replaced by the real Postgres SERIAL after backend persistence.
-   * @param transportData - Transport payload; any `id_transport` value is overwritten.
-   */
-  create(transportData: Transport): void {
-    const newItem: Transport = {
-      ...transportData,
-      id_transport: Math.floor(Date.now() / 1000)
-    };
-
-    this.data.push(newItem);
-    this.refresh();
+  // ✅ CREATE: no envía id_transport, Supabase lo genera con nextval()
+  create(data: Transport): Observable<any> {
+    const { id_transport, ...payload } = data;
+    return this.http.post<any>(this.apiUrl, payload, { headers: this.getHeaders() }).pipe(
+      tap(() => { this.invalidate(); this.getLatestTransports().subscribe(); })
+    );
   }
 
-  /**
-   * Replaces the transport matching `id` with the supplied data, preserving the primary key.
-   * No-op if `id` is not found in the local cache.
-   * @param id - The `id_transport` of the record to update.
-   * @param transportData - New field values; `id_transport` is ignored and overridden.
-   */
-  update(id: number, transportData: Transport): void {
-    const index = this.data.findIndex(t => t.id_transport === id);
-
-    if (index !== -1) {
-      this.data[index] = { ...transportData, id_transport: id };
-      this.refresh();
-    }
+  update(id: number, transportData: Transport): Observable<any> {
+    const { id_transport, ...payload } = transportData;
+    return this.http.patch<any>(`${this.apiUrl}/${id}`, payload, { headers: this.getHeaders() }).pipe(
+      tap(() => { this.invalidate(); this.getLatestTransports().subscribe(); })
+    );
   }
 
-  /**
-   * Removes the transport matching `id` from local state.
-   * No-op if `id` is not found.
-   * @param id - The `id_transport` of the record to remove.
-   */
-  delete(id: number): void {
-    this.data = this.data.filter(t => t.id_transport !== id);
-    this.refresh();
+  delete(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() }).pipe(
+      tap(() => { this.invalidate(); this.getLatestTransports().subscribe(); })
+    );
   }
 
   /** Pushes a copy of the current array to subscribers, triggering change detection. */
   private refresh(): void {
     this.dataSubject.next([...this.data]);
+  }
+
+  getLatestTransports(page: number = 1): Observable<Transport[]> {
+    return this.http.get<any>(`${this.apiUrl}?page=${page}`, { headers: this.getHeaders() }).pipe(
+      map(response => {
+        console.log('page_count transport:', response.page_count);
+        const list = response._embedded?.transport || [];
+        this.data = list;
+        this._currentPage = response.page || page;
+        this._totalPages = response.page_count || 1;
+        this.refresh();
+        return [...list];
+      })
+    );
+  }
+
+  private invalidate(): void {
+    this.data = [];
   }
 }

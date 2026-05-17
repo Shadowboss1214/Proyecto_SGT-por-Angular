@@ -1,17 +1,18 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { combineLatest } from 'rxjs';
 import { TripService } from '../../services/trips';
 import { Trip, Route } from '../../models/trips';
-import { RouterModule, Router, ActivatedRoute } from '@angular/router';
+import { RouterModule, ActivatedRoute } from '@angular/router';
 import { TableComponent } from '../../../../shared/components/table/table';
 import { Employee } from '../../../employes/models/employee';
 import { Transport } from '../../../transport/models/transport';
 import { TransportService } from '../../../transport/services/transport';
 import { EmployeeService } from '../../../employes/services/employes';
-import { AuthService } from '../../../login';
+import { AuthService } from '../../../../core/services/auth.service';
 import { ReportService } from '../../../../core/services/report.service';
 import { QrModalComponent } from '../../../../shared/components/qr-modal/qr-modal';
+import { NavigationService } from '../../../../core/services/nav.service';
 
 /**
  * View component for the trip list screen (/app/admin/trips and /app/driver/trips).
@@ -33,10 +34,11 @@ export class TripsListComponent implements OnInit {
   private service = inject(TripService);
   private transportService = inject(TransportService);
   private employeeService = inject(EmployeeService);
-  private router = inject(Router);
+  private router = inject(NavigationService);
   private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
   private reportService = inject(ReportService);
+  private cdr = inject(ChangeDetectorRef);
 
   /** Current user role, read from route data to determine visibility and filtering rules. */
   role = this.route.pathFromRoot
@@ -63,6 +65,8 @@ export class TripsListComponent implements OnInit {
 
   /** Raw trip array; scoped to the authenticated driver when role === 'driver'. */
   Trips: Trip[] = [];
+  currentPage = 1;
+  totalPages = 1;
 
   columns = [
     { label: 'Transporte', field: 'transportName' },
@@ -82,6 +86,11 @@ export class TripsListComponent implements OnInit {
    * Driver role filtering uses the employee ID embedded in the JWT payload.
    */
   ngOnInit() {
+    this.service.getLatestTrips().subscribe();
+    this.transportService.getLatestTransports().subscribe();
+    this.employeeService.getLatestEmployees().subscribe();
+
+
     combineLatest([
       this.service.getAll(),
       this.transportService.getAll(),
@@ -94,6 +103,7 @@ export class TripsListComponent implements OnInit {
         const employeeId = Number(this.authService.getEmployeeId());
         this.Trips = trips.filter(trip => trip.id_employee === employeeId);
       } else {
+        this.loadPage(1);
         this.Trips = trips;
       }
 
@@ -118,7 +128,7 @@ export class TripsListComponent implements OnInit {
 
   /** Delegates deletion to TripService. @param item - The trip row to delete. */
   onDelete(item: Trip) {
-    this.service.delete(item.id_trip);
+    this.service.delete(item.id_trip).subscribe();
   }
 
   /**
@@ -200,5 +210,19 @@ export class TripsListComponent implements OnInit {
   onQrClose() {
     this.showQrModal = false;
     this.selectedTrip = null;
+  }
+
+  changePage(page: number) {
+    this.currentPage = page;
+
+    this.loadPage(page);
+  }
+
+  loadPage(page: number) {
+    this.service.getLatestTrips(page).subscribe(() => {
+      this.currentPage = this.service.page;
+      this.totalPages = this.service.total;
+      this.cdr.detectChanges();
+    });
   }
 }

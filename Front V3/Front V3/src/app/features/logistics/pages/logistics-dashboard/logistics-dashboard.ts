@@ -1,6 +1,7 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TripService } from '../../../trips/services/trips';
+import { LogisticsService } from '../../services/logistics';
+import { ReportService } from '../../../../core/services/report.service';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, Chart, registerables } from 'chart.js';
 Chart.register(...registerables);
@@ -13,103 +14,81 @@ Chart.register(...registerables);
   styleUrl: './logistics-dashboard.css'
 })
 export class LogisticsDashboardComponent implements OnInit {
-  
 
-  private tripService = inject(TripService);
+  private logisticsService = inject(LogisticsService);
+  private reportService = inject(ReportService);
+  private cdr = inject(ChangeDetectorRef);
+
+  totalIncome = 0;
+  totalCost   = 0;
+  profit      = 0;
+  efficiency  = 0;
+  totalTrips  = 0;
+  insight     = '';
+
+  private tripsByDay: Record<string, number> = {};
+
+  columns = [
+    { label: 'Métrica', field: 'metrica' },
+    { label: 'Valor',   field: 'valor'   },
+  ];
 
   barChartData: ChartConfiguration<'bar'>['data'] = {
     labels: ['Ingresos', 'Gastos'],
-    datasets: [
-      {
-        label: 'Finanzas',
-        data: [0, 0]
-      }
-    ]
+    datasets: [{ label: 'Finanzas', data: [0, 0] }]
   };
-  trips: any[] = [];
-
-  totalIncome = 0;
-  totalCost = 0;
-  profit = 0;
-  totalTrips = 0;
-
-  ngOnInit() {
-    this.tripService.getAll().subscribe(trips => {
-      this.trips = trips;
-      this.calculateMetrics();
-    });
-  }
-
-  calculateMetrics() {
-
-  this.totalTrips = this.trips.length;
-
-  this.totalIncome = this.trips.reduce((sum, t) => sum + t.income, 0);
-
-  this.totalCost = this.trips.reduce((sum, t) => sum + t.fuelCost, 0);
-
-  this.profit = this.totalIncome - this.totalCost;
-
-  this.barChartData = {
-    labels: ['Ingresos', 'Gastos'],
-    datasets: [
-      {
-        label: 'Finanzas',
-        data: [this.totalIncome, this.totalCost]
-      }
-    ]
-  };
-
-  this.generateTripsChart();
-}
 
   lineChartData: ChartConfiguration<'line'>['data'] = {
-  labels: [],
-  datasets: [
-    {
-      label: 'Viajes',
-      data: []
-    }
-  ]
-};
-
-generateTripsChart() {
-  const map: any = {};
-
-  this.trips.forEach(t => {
-    const date = t.date;
-
-    if (!map[date]) {
-      map[date] = 0;
-    }
-
-    map[date]++;
-  });
-
-  this.lineChartData = {
-    labels: Object.keys(map),
-    datasets: [
-      {
-        label: 'Viajes por día',
-        data: Object.values(map)
-      }
-    ]
+    labels: [],
+    datasets: [{ label: 'Viajes por día', data: [] }]
   };
-}
-  get efficiency() {
-    if (!this.totalCost) return 0;
-    return (this.profit / this.totalCost) * 100;
+
+  ngOnInit() {
+    this.logisticsService.getMetrics().subscribe(metrics => {
+      this.totalIncome = metrics.total_income;
+      this.totalCost   = metrics.total_cost;
+      this.profit      = metrics.profit;
+      this.efficiency  = metrics.efficiency;
+      this.totalTrips  = metrics.total_trips;
+      this.insight     = metrics.insight;
+      this.tripsByDay  = metrics.trips_by_day ?? {};
+
+      this.barChartData = {
+        labels: ['Ingresos', 'Gastos'],
+        datasets: [{ label: 'Finanzas', data: [this.totalIncome, this.totalCost] }]
+      };
+
+      this.lineChartData = {
+        labels: Object.keys(metrics.trips_by_day),
+        datasets: [{ label: 'Viajes por día', data: Object.values(metrics.trips_by_day) }]
+      };
+    });
+    this.cdr.detectChanges();
   }
 
-  get insight(): string {
-    if (this.profit < 0) {
-      return 'Estás perdiendo dinero en operaciones';
-    }
-
-    if (this.efficiency < 20) {
-      return 'Baja eficiencia operativa';
-    }
-
-    return 'Operación saludable';
+  get reportData() {
+    const fmt = (v: number) => v.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
+    const rows: { metrica: string; valor: string }[] = [
+      { metrica: 'Ingresos Totales', valor: fmt(this.totalIncome) },
+      { metrica: 'Gastos Totales',   valor: fmt(this.totalCost)   },
+      { metrica: 'Utilidad',         valor: fmt(this.profit)      },
+      { metrica: 'Eficiencia',       valor: `${this.efficiency.toFixed(2)} %` },
+      { metrica: 'Total de Viajes',  valor: String(this.totalTrips) },
+      ...Object.entries(this.tripsByDay).map(([date, count]) => ({
+        metrica: `Viajes ${date}`,
+        valor: String(count),
+      })),
+    ];
+    return rows;
   }
+
+  exportPdf(): void {
+    this.reportService.exportToPdf(this.reportData, this.columns, 'Reporte de Logística');
+  }
+
+  exportExcel(): void {
+    this.reportService.exportToExcel(this.reportData, this.columns, 'reporte_logistica');
+  }
+
+
 }

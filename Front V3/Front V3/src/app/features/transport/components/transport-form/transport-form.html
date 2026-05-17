@@ -3,11 +3,8 @@
   <div class="field">
     <label>Nombre</label>
     <input formControlName="name" />
-
     @if (form.get('name')?.touched && form.get('name')?.invalid) {
-    <small>
-      El nombre es obligatorio
-    </small>
+      <small>El nombre es obligatorio</small>
     }
   </div>
 
@@ -15,9 +12,7 @@
     <label>Tipo</label>
     <input formControlName="type" />
     @if (form.get('type')?.touched && form.get('type')?.invalid) {
-    <small>
-      El tipo es obligatorio
-    </small>
+      <small>El tipo es obligatorio</small>
     }
   </div>
 
@@ -25,47 +20,44 @@
     <label>Placa</label>
     <input formControlName="plate" />
     @if (form.get('plate')?.touched && form.get('plate')?.invalid) {
-    <small>
-      Mínimo 5 caracteres
-    </small>
+      <small>Mínimo 5 caracteres</small>
     }
   </div>
 
   <div class="field">
     <label>Estado</label>
     <select formControlName="status">
+      <option value="">-- Selecciona --</option>
       <option value="Activo">Activo</option>
       <option value="Inactivo">Inactivo</option>
+      <option value="Mantenimiento">En Mantenimiento</option>
     </select>
+    @if (form.get('status')?.touched && form.get('status')?.invalid) {
+      <small>El estado es obligatorio</small>
+    }
   </div>
 
   <div class="field">
     <label>Costo por Km</label>
-    <input formControlName="costPerKm" />
+    <input formControlName="costPerKm" type="number" step="0.01" min="0" />
     @if (form.get('costPerKm')?.touched && form.get('costPerKm')?.invalid) {
-    <small>
-      El costo por kilometro del vehiculo es nescesario
-    </small>
+      <small>El costo por kilómetro del vehículo es necesario</small>
     }
   </div>
 
   <div class="field">
     <label>Costo de mantenimiento</label>
-    <input formControlName="maintenanceCost" />
+    <input formControlName="maintenanceCost" type="number" step="0.01" min="0" />
     @if (form.get('maintenanceCost')?.touched && form.get('maintenanceCost')?.invalid) {
-    <small>
-      El costo de mantenimiento del vehiculo es nescesario
-    </small>
+      <small>El costo de mantenimiento del vehículo es necesario</small>
     }
   </div>
 
   <div class="field">
-    <label>Consumo de conbustible</label>
-    <input formControlName="fuelConsumption" />
+    <label>Consumo de combustible</label>
+    <input formControlName="fuelConsumption" type="number" step="0.01" min="0" />
     @if (form.get('fuelConsumption')?.touched && form.get('fuelConsumption')?.invalid) {
-    <small>
-      El consumo de combustible del vehiculo es nescesario
-    </small>
+      <small>El consumo de combustible del vehículo es necesario</small>
     }
   </div>
 

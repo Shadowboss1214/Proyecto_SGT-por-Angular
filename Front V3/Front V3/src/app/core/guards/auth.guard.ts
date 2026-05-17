@@ -1,5 +1,7 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
+import { ActivatedRouteSnapshot, CanActivateFn } from '@angular/router';
+import { catchError, map, of } from 'rxjs';
+import { NavigationService } from '../../core/services/nav.service';
 import { AuthService } from '../services/auth.service';
 
 /**
@@ -15,22 +17,51 @@ import { AuthService } from '../services/auth.service';
  * /app/login.
  * @returns true if the token exists and has not expired; false otherwise.
  */
-export const authGuard: CanActivateFn = () => {
+export const authGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
   const auth = inject(AuthService);
-  const router = inject(Router);
+  const nav = inject(NavigationService);
 
   const token = auth.getToken();
   if (!token) {
-    router.navigate(['/app/login']);
+    nav.navigate(['/app/login']);
     return false;
   }
 
-  const payload = auth.getTokenPayload();
-  if (payload?.exp && Date.now() / 1000 > payload.exp) {
-    auth.logout();
-    router.navigate(['/app/login']);
-    return false;
+  if (auth.isTokenExpired()) {
+    const refreshToken = auth.getRefreshToken();
+    if (!refreshToken) {
+      auth.logout();
+      nav.navigate(['/app/login']);
+      return false;
+    }
+
+    return auth.refreshToken().pipe(
+      map(() => checkRole(route, auth, nav)),
+      catchError(() => {
+        auth.logout();
+        nav.navigate(['/app/login']);
+        return of(false);
+      })
+    );
   }
 
-  return true;
+  return checkRole(route, auth, nav);
 };
+
+function checkRole(route: ActivatedRouteSnapshot, auth: AuthService, nav: NavigationService): boolean {
+  const requiredRole: string | undefined = route.data['role'];
+  if (requiredRole) {
+    const userRole = auth.getRole();
+    if (userRole !== requiredRole) {
+      if(userRole == 'ADMIN'){
+      nav.navigate([`/app/${userRole}/dashboard`]);
+      return false;
+      }
+      else if(userRole == 'CHOUFER'){
+        nav.navigate([`/app/driver/dashboard`]);
+      return false;
+      }
+    }
+  }
+  return true;
+}

@@ -3,7 +3,7 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Employee } from '../../models/employee';
 import { Component, Input, OnInit } from '@angular/core';
 import { EmployeeService } from '../../services/employes';
-import { Router } from '@angular/router';
+import { NavigationService } from '../../../../core/services/nav.service';
 import { Validators } from '@angular/forms';
 
 /**
@@ -26,7 +26,8 @@ export class EmployeeFormComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private service: EmployeeService,
-    private router: Router) { }
+    private router: NavigationService
+  ) {}
 
   form!: any;
 
@@ -43,8 +44,12 @@ export class EmployeeFormComponent implements OnInit {
    */
   ngOnInit() {
     this.form = this.fb.group({
-      name: ['', Validators.required],
-      salary: ['', [Validators.required, Validators.pattern("^[0-9]+(.[0-9]{1,2})?$")]],
+      name:     ['', Validators.required],
+      lastName: ['', Validators.required],
+      salary:   ['', [Validators.required, Validators.pattern("^[0-9]+(.[0-9]{1,2})?$")]],
+      role:     ['', Validators.required],
+      username: ['', Validators.required],
+      password: ['', [Validators.required, Validators.minLength(6)]],
     });
     if (this.data) {
       this.form.patchValue(this.data);
@@ -63,11 +68,13 @@ export class EmployeeFormComponent implements OnInit {
     const value = this.form.value as Employee;
 
     if (this.id) {
-      this.service.update(+this.id, value);
+      this.service.update(+this.id, value).subscribe(() => {
+        this.router.navigate(['/employee']);
+      });
     } else {
-      this.service.create(value);
+      this.service.register(value).subscribe(() => {
+        this.router.navigate(['/employee']);
+      });
     }
-
-    this.router.navigate(['/employee']);
   }
 }

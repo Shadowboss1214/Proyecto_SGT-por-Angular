@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
+import { NavigationService } from '../../core/services/nav.service'; 
 import { TopMenu } from '../../shared/components/top-menu/top-menu';
 
 /**
@@ -17,7 +18,7 @@ import { TopMenu } from '../../shared/components/top-menu/top-menu';
   styleUrl: './admin-layout.css',
 })
 export class AdminLayout {
-  private router = inject(Router);
+  private router = inject(NavigationService);
 
   /** Navigates to the admin dashboard. */
   goToDashboard() {

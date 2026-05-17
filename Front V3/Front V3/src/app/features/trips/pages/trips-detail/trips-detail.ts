@@ -1,10 +1,11 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { TripService } from '../../services/trips';
 import { Trip } from '../../models/trips';
 import { CommonModule } from '@angular/common';
 import { TripsForm } from '../../components/trips-form/trips-form';
 import { QrService } from '../../../../core/services/qr.service';
+import { NavigationService } from '../../../../core/services/nav.service';
 
 /**
  * View component for the trip detail and edit screen (/app/.../trips/:id).
@@ -24,21 +25,19 @@ import { QrService } from '../../../../core/services/qr.service';
 export class TripsDetailComponent implements OnInit {
   private qrService = inject(QrService);
   private cdr = inject(ChangeDetectorRef);
+  private nav = inject(NavigationService);
 
   /** The loaded trip record; undefined while loading or when the ID is not found. */
   trip?: Trip;
 
   /** Base64 PNG Data URL of the trip's QR code; null until generation completes. */
   qrDataUrl: string | null = null;
+  isEdit = false;
 
   constructor(
     private route: ActivatedRoute,
-    private router: Router,
     private service: TripService
-  ) { }
-
-  /** True when the view is in create-or-edit mode; false for read-only detail. */
-  isEdit = false;
+  ) {}
 
   /**
    * Resolves the trip by route param `id`, determines view mode from URL segments,
@@ -56,12 +55,12 @@ export class TripsDetailComponent implements OnInit {
     this.isEdit = url.includes('edit') || isNew;
 
     if (id && !isNew) {
-      this.trip = this.service.getById(+id);
-      if (this.trip) {
-        this.qrService.generateTripQr(this.trip.id_trip)
+      this.service.getById(+id).subscribe(trip => {
+        this.trip = trip;
+        this.qrService.generateTripQr(trip.id_trip)
           .then(url => { this.qrDataUrl = url; this.cdr.detectChanges(); })
           .catch(() => {});
-      }
+      });
     }
   }
 
@@ -69,8 +68,9 @@ export class TripsDetailComponent implements OnInit {
    * Deletes the trip and navigates back to the trip list.
    * @param id - String form of the trip primary key taken from the route snapshot.
    */
-  delete(id: string){
-    this.service.delete(+id);
-    this.router.navigate(['/trip']);
+  delete(id: string) {
+    this.service.delete(+id).subscribe(() => {
+      this.nav.navigate(['/trips']);
+    });
   }
 }

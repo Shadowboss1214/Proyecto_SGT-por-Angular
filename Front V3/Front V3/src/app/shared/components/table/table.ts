@@ -22,6 +22,8 @@ export class TableComponent {
 
   /** Column definitions that determine which fields are shown and their display labels. */
   @Input() columns: TableColumn[] = [];
+  @Input() currentPage: number = 1;
+  @Input() totalPages: number = 1;
 
   /** Emitted when the user clicks the view/detail action for a row. */
   @Output() view = new EventEmitter<any>();
@@ -35,6 +37,30 @@ export class TableComponent {
   /** Emitted when the user clicks the QR action; payload is the full row object. */
   @Output() qr = new EventEmitter<any>();
 
+  @Output() pageChange = new EventEmitter<number>();
+
+    get pages(): number[] {
+    return Array.from(
+      { length: this.totalPages },
+      (_, i) => i + 1
+    );
+  }
+
+  prev() {
+    if (this.currentPage > 1) {
+      this.pageChange.emit(this.currentPage - 1);
+    }
+  }
+
+  next() {
+    if (this.currentPage < this.totalPages) {
+      this.pageChange.emit(this.currentPage + 1);
+    }
+  }
+
+  goTo(page: number) {
+    this.pageChange.emit(page);
+  }
 }
 
 /** Descriptor for a single column in the generic table. */
