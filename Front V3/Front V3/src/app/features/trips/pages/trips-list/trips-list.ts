@@ -49,7 +49,7 @@ export class TripsListComponent implements OnInit {
   statusFilter = '';
   Trips: Trip[] = [];
   currentPage = 1;
-  totalPages = this.service.total;
+  totalPages = 1;
 
   columns = [
     { label: 'Transporte', field: 'transportName' },
@@ -66,7 +66,7 @@ export class TripsListComponent implements OnInit {
     this.service.getLatestTrips().subscribe();
     this.transportService.getLatestTransports().subscribe();
     this.employeeService.getLatestEmployees().subscribe();
-    this.loadPage(1);
+
 
     combineLatest([
       this.service.getAll(),
@@ -80,6 +80,7 @@ export class TripsListComponent implements OnInit {
         const employeeId = Number(this.authService.getEmployeeId());
         this.Trips = trips.filter(trip => trip.id_employee === employeeId);
       } else {
+        this.loadPage(1);
         this.Trips = trips;
       }
 

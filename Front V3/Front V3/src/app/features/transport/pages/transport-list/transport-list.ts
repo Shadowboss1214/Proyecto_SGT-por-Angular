@@ -27,7 +27,7 @@ export class TransportListComponent implements OnInit {
   statusFilter = '';
   transports: Transport[] = [];
   currentPage = 1;
-  totalPages = this.transportService.total;
+  totalPages = 1;
 
 
   columns = [
@@ -106,7 +106,6 @@ export class TransportListComponent implements OnInit {
 
   changePage(page: number) {
     this.currentPage = page;
-
     this.loadTransports(page);
   }
 

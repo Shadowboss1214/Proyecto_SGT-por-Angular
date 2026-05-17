@@ -68,6 +68,7 @@ export class TransportService {
   getLatestTransports(page: number = 1): Observable<Transport[]> {
     return this.http.get<any>(`${this.apiUrl}?page=${page}`, { headers: this.getHeaders() }).pipe(
       map(response => {
+         console.log('page_count transport:', response.page_count);
         const list = response._embedded?.transport || [];
         this.data = list;
         this._currentPage = response.page || page;
