@@ -7,12 +7,12 @@ El sistema permite a administradores gestionar empleados, vehículos y viajes a 
 
 ## Equipo de desarrollo
 
-| Nombre                      |
-|-----------------------------|
-| Julian                      |
-| Gael Salazar                |
-| Ivan Augusto Pérez Saldívar |
-| Arturo Cabrera              |
+| Nombre                           |
+|----------------------------------|
+| Cabrera Vidaña Arturo            |
+| Salazar Gael                     |
+| Pérez Saldívar Iván Augusto      |
+| Rodríguez Jaime Julián Alejandro |
 
 ### Base de datos
 | Tecnología | Detalle |
