@@ -7,6 +7,11 @@ import { TransportService } from '../../../transport/services/transport';
 import { TripService } from '../../../trips/services/trips';
 import { EmployeeService } from '../../../employes/services/employes';
 
+/**
+ * Dashboard component that displays key statistics based on the authenticated user's role.
+ * Renders different stat cards for admin users and drivers.
+ */
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -15,19 +20,41 @@ import { EmployeeService } from '../../../employes/services/employes';
   styleUrl: './dashboard.css'
 })
 export class DashboardComponent implements OnInit {
+ /** Provides access to the current route snapshot and its data */
+  private route = inject(ActivatedRoute);
 
-  private route           = inject(ActivatedRoute);
-  private authService     = inject(AuthService);
+  /** Service for authentication-related operations */
+  private authService = inject(AuthService);
+
+  /** Service for transport data retrieval */
   private transportService = inject(TransportService);
-  private tripService     = inject(TripService);
+
+  /** Service for trip data retrieval */
+  private tripService = inject(TripService);
+
+  /** Service for employee data retrieval */
   private employeeService = inject(EmployeeService);
+
+    /**
+   * Role of the authenticated user, resolved from the route tree.
+   * Traverses parent routes to find the first defined role.
+   * Possible values: `'admin'` | `'driver'`
+   */
 
   role = this.route.pathFromRoot
     .map(r => r.snapshot.data['role'])
     .find(role => !!role) as 'admin' | 'driver';
 
+    /**
+   * List of statistic cards to display on the dashboard.
+   * Each entry contains a title and a computed value.
+   */
   stats: { title: string; value: string | number }[] = [];
 
+    /**
+   * Lifecycle hook that initializes the dashboard.
+   * Loads the appropriate stats based on the user's role.
+   */
   ngOnInit() {
     if (this.role === 'admin') {
       this.loadAdminStats();
@@ -36,6 +63,11 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  /**
+   * Loads statistics for admin users.
+   * Fetches transports, trips, and employees in parallel using `combineLatest`,
+   * then computes summary metrics such as active vehicles and trips made today.
+   */
   private loadAdminStats() {
     combineLatest([
       this.transportService.getLatestTransports(),
@@ -56,6 +88,11 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+   /**
+   * Loads statistics for driver users.
+   * Filters trips by the authenticated employee's ID and computes
+   * personal metrics such as total trips and the most recent trip.
+   */
   private loadDriverStats() {
     const employeeId = Number(this.authService.getEmployeeId());
 
