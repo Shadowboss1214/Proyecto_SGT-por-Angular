@@ -100,8 +100,14 @@ export class LogisticsDashboardComponent implements OnInit {
         labels: Object.keys(metrics.trips_by_day),
         datasets: [{ label: 'Viajes por día', data: Object.values(metrics.trips_by_day) }]
       };
-    }});
-    this.cdr.detectChanges();
+           this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
    /**
