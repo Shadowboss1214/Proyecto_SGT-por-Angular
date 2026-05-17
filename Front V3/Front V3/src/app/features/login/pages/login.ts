@@ -4,6 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { NavigationService } from '../../../core/services/nav.service';
 
+/**
+ * Login component that handles user authentication.
+ * Submits credentials to the OAuth2 endpoint, stores the received token,
+ * resolves the employee's role and redirects to the appropriate dashboard.
+ */
+
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -18,11 +24,29 @@ export class LoginComponent {
   loading  = false;
   error    = '';
 
+  /**
+   * @param authService - Service that handles authentication, token storage and employee lookup
+   * @param router      - Role-aware navigation service for redirecting after login
+   */
   constructor(
     private authService: AuthService,
     private router: NavigationService
   ) {}
 
+   /**
+   * Handles the login form submission.
+   *
+   * Performs the following steps:
+   * 1. Validates that both fields are filled.
+   * 2. Sends credentials to the OAuth2 endpoint via `AuthService.login()`.
+   * 3. Stores the received access token and optional refresh token.
+   * 4. Fetches the employee record matching the username to resolve the role.
+   * 5. Stores the role and employee ID, then redirects to the correct dashboard.
+   *
+   * @remarks
+   * Redirects to `/app/admin/dashboard` for `ADMIN` role,
+   * or `/app/driver/dashboard` for any other role.
+   */
   login() {
     if (!this.username || !this.password) {
       this.error = 'Por favor, llena todos los campos';

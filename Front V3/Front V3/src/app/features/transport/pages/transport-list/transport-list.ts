@@ -8,6 +8,14 @@ import { TableComponent } from '../../../../shared/components/table/table';
 import { ReportService } from '../../../../core/services/report.service';
 import { QrModalComponent } from '../../../../shared/components/qr-modal/qr-modal';
 
+
+
+/**
+ * Component that displays the paginated list of transport units.
+ * Supports in-memory search by name and plate, status filtering,
+ * pagination controls, and export to PDF and Excel.
+ */
+
 @Component({
   selector: 'app-transport-list',
   standalone: true,
@@ -17,16 +25,31 @@ import { QrModalComponent } from '../../../../shared/components/qr-modal/qr-moda
 })
 export class TransportListComponent implements OnInit {
 
+  /** Service for transport CRUD operations and pagination state */
   private service = inject(TransportService);
+
+  /** Role-aware navigation service for redirecting to detail and edit views */
   private router = inject(NavigationService);
+
+  /** Angular change detector used to force view update after async data load */
   private cdr = inject(ChangeDetectorRef);
+
+  /** Service used to export report data to PDF and Excel formats */
   private reportService = inject(ReportService);
 
   loading = true;
   search = '';
+
+  /** Current status filter value (e.g. `'ACTIVO'` | `'INACTIVO'`) */
   statusFilter = '';
+
+  /** Transport records loaded from the current page */
   transports: Transport[] = [];
+
+  /** Current active page number */
   currentPage = 1;
+
+  /** Total number of pages available from the API */
   totalPages = 1;
 
   columns = [
@@ -50,8 +73,23 @@ export class TransportListComponent implements OnInit {
     }
   }
 
+   /**
+   * Navigates to the read-only detail view of the selected transport.
+   *
+   * @param item - Transport unit selected by the user
+   */
   onView(item: Transport)   { this.router.navigate(['/transport', item.id_transport]); }
+   /**
+   * Navigates to the edit form for the selected transport.
+   *
+   * @param item - Transport unit to be edited
+   */
   onEdit(item: Transport)   { this.router.navigate(['/transport', item.id_transport, 'edit']); }
+  /**
+   * Deletes the selected transport unit and reloads the first page.
+   *
+   * @param item - Transport unit to be deleted
+   */
   onDelete(item: Transport) {
     this.service.delete(item.id_transport).subscribe({
       next: () => this.loadTransports(this.currentPage),
@@ -59,6 +97,12 @@ export class TransportListComponent implements OnInit {
     });
   }
 
+   /**
+   * Returns the subset of transports matching the current search and status filter.
+   * Filters in memory against the currently loaded page.
+   *
+   * @returns Filtered array of transport units
+   */
   get filtered(): Transport[] {
     const s = this.search.toLowerCase();
     return this.transports.filter(t =>
@@ -67,10 +111,21 @@ export class TransportListComponent implements OnInit {
     );
   }
 
+    /**
+   * Updates the search string used to filter the transport list.
+   * @param value - New search term entered by the user
+   */
   onSearchChange(v: string) { this.search = v; }
   onStatusChange(v: string) { this.statusFilter = v; }
 
+  /**
+   * Exports the currently filtered transport list to a PDF file.
+   */
   exportPdf()   { this.reportService.exportToPdf(this.filtered, this.columns, 'Reporte de Transportes'); }
+
+    /**
+   * Exports the currently filtered transport list to an Excel (.xlsx) file.
+   */
   exportExcel() { this.reportService.exportToExcel(this.filtered, this.columns, 'reporte_transportes'); }
 
   showQrModal = false;
@@ -84,6 +139,12 @@ export class TransportListComponent implements OnInit {
     this.loadTransports(page);
   }
 
+  /**
+   * Fetches a specific page of transports from the API and updates the component state.
+   * Updates `currentPage`, `totalPages`, and `transports` after a successful response.
+   *
+   * @param page - Page number to load (1-based index)
+   */
   loadTransports(page: number) {
     this.loading = true;
     this.service.getLatestTransports(page).subscribe({

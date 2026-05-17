@@ -6,6 +6,12 @@ import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, Chart, registerables } from 'chart.js';
 Chart.register(...registerables);
 
+/**
+ * Logistics dashboard component that displays financial and operational metrics.
+ * Renders a bar chart comparing income vs costs, a line chart of daily trips,
+ * and a summary table exportable as PDF or Excel.
+ */
+
 @Component({
   selector: 'app-logistics-dashboard',
   standalone: true,
@@ -15,17 +21,33 @@ Chart.register(...registerables);
 })
 export class LogisticsDashboardComponent implements OnInit {
 
+ /** Service that fetches computed logistics metrics from the API */
   private logisticsService = inject(LogisticsService);
+
+  /** Service used to export report data to PDF and Excel formats */
   private reportService    = inject(ReportService);
+
+  /** Angular change detector used to force view update after async data load */
   private cdr              = inject(ChangeDetectorRef);
 
   loading = true;
+  /** Total income across all trips */
   totalIncome = 0;
-  totalCost   = 0;
-  profit      = 0;
-  efficiency  = 0;
-  totalTrips  = 0;
-  insight     = '';
+
+  /** Total cost across all trips (fuel + maintenance) */
+  totalCost = 0;
+
+  /** Net profit calculated as `totalIncome - totalCost` */
+  profit = 0;
+
+  /** Operational efficiency percentage */
+  efficiency = 0;
+
+  /** Total number of trips registered in the system */
+  totalTrips = 0;
+
+  /** AI or computed insight message summarizing the logistics performance */
+  insight = '';
 
   private tripsByDay: Record<string, number> = {};
 
@@ -34,16 +56,30 @@ export class LogisticsDashboardComponent implements OnInit {
     { label: 'Valor',   field: 'valor'   },
   ];
 
+   /**
+   * Configuration data for the bar chart comparing total income vs total costs.
+   * Updated after metrics are loaded from the API.
+   */
   barChartData: ChartConfiguration<'bar'>['data'] = {
     labels: ['Ingresos', 'Gastos'],
     datasets: [{ label: 'Finanzas', data: [0, 0] }]
   };
 
+   /**
+   * Configuration data for the line chart showing trip volume per day.
+   * Labels are dates and data points are trip counts.
+   * Updated after metrics are loaded from the API.
+   */
   lineChartData: ChartConfiguration<'line'>['data'] = {
     labels: [],
     datasets: [{ label: 'Viajes por día', data: [] }]
   };
 
+   /**
+   * Lifecycle hook that fetches logistics metrics on component initialization.
+   * Populates all stat properties and updates both chart datasets.
+   * Triggers manual change detection after the async operation completes.
+   */
   ngOnInit() {
     this.logisticsService.getMetrics().subscribe({
       next: metrics => {
@@ -55,15 +91,16 @@ export class LogisticsDashboardComponent implements OnInit {
         this.insight     = metrics.insight;
         this.tripsByDay  = metrics.trips_by_day ?? {};
 
-        this.barChartData = {
-          labels: ['Ingresos', 'Gastos'],
-          datasets: [{ label: 'Finanzas', data: [this.totalIncome, this.totalCost] }]
-        };
-        this.lineChartData = {
-          labels: Object.keys(metrics.trips_by_day),
-          datasets: [{ label: 'Viajes por día', data: Object.values(metrics.trips_by_day) }]
-        };
-        this.loading = false;
+      this.barChartData = {
+        labels: ['Ingresos', 'Gastos'],
+        datasets: [{ label: 'Finanzas', data: [this.totalIncome, this.totalCost] }]
+      };
+
+      this.lineChartData = {
+        labels: Object.keys(metrics.trips_by_day),
+        datasets: [{ label: 'Viajes por día', data: Object.values(metrics.trips_by_day) }]
+      };
+           this.loading = false;
         this.cdr.detectChanges();
       },
       error: () => {
@@ -73,6 +110,12 @@ export class LogisticsDashboardComponent implements OnInit {
     });
   }
 
+   /**
+   * Builds the report data array from the current metrics.
+   * Formats monetary values as MXN currency and appends one row per day in `tripsByDay`.
+   *
+   * @returns Array of `{ metrica, valor }` rows ready for PDF or Excel export
+   */
   get reportData() {
     const fmt = (v: number) => v.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
     const rows: { metrica: string; valor: string }[] = [
@@ -89,6 +132,14 @@ export class LogisticsDashboardComponent implements OnInit {
     return rows;
   }
 
+    /**
+   * Exports the current logistics report data to a PDF file.
+   * Uses `ReportService` with the computed `reportData` rows and column definitions.
+   */
   exportPdf()   { this.reportService.exportToPdf(this.reportData, this.columns, 'Reporte de Logística'); }
+   /**
+   * Exports the current logistics report data to an Excel (.xlsx) file.
+   * Uses `ReportService` with the computed `reportData` rows and column definitions.
+   */
   exportExcel() { this.reportService.exportToExcel(this.reportData, this.columns, 'reporte_logistica'); }
 }
