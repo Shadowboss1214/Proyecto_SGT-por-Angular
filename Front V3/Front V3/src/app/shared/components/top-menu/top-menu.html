@@ -1,16 +1,16 @@
 <div class="top-bar">
-  <div class="profile-wrapper">
-    <img
-      class="profile-img"
-      src="https://www.gravatar.com/avatar/?d=mp"
-      alt="Perfil"
-      (click)="toggleMenu()"
-    />
-
-    @if (isMenuOpen()) {
-      <div class="dropdown-menu">
-        <button class="logout-btn" (click)="logout()">Cerrar sesión</button>
-      </div>
-    }
+  <div class="top-bar__user" (click)="toggleMenu()">
+    <div class="avatar">{{ username[0]?.toUpperCase() }}</div>
+    <div class="user-info">
+      <span class="user-name">{{ username }}</span>
+      <span [class]="badgeClass">{{ roleLabel }}</span>
+    </div>
+    <span class="chevron">&#8964;</span>
   </div>
+
+  @if (isMenuOpen()) {
+    <div class="dropdown-menu">
+      <button class="logout-btn" (click)="logout()">Cerrar sesión</button>
+    </div>
+  }
 </div>

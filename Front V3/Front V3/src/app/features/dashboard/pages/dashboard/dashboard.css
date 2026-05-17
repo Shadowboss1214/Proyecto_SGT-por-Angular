@@ -1,27 +1,31 @@
-h1 {
-  margin-bottom: 20px;
-}
+h1 { font-size: 20px; margin-bottom: 24px; }
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
 }
 
 .card {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-md);
+  border-top: 3px solid var(--color-primary);
 }
 
 .card h3 {
-  font-size: 14px;
-  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin-bottom: 8px;
 }
 
 .card p {
-  font-size: 28px;
-  font-weight: bold;
-  margin-top: 10px;
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
 }
