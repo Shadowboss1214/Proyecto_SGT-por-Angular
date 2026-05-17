@@ -7,14 +7,10 @@ export class NavigationService {
     private router = inject(Router);
 
     get roleBase(): string {
-        if (localStorage.getItem('role') == 'ADMIN') {
-            const role = localStorage.getItem('role')?.toLowerCase();
-            return `/app/${role}`;
-        } else if(localStorage.getItem('role') == 'CHOUFER'){
-            return `/app/driver`;
-        }
-
-        return `/app`;
+        const role = (localStorage.getItem('role') ?? '').toLowerCase();
+        if (role === 'admin') return '/app/admin';
+        if (role === 'driver' || role === 'choufer' || role === 'chofer') return '/app/driver';
+        return '/app';
     }
 
     navigate(segments: any[], extras?: NavigationExtras) {
