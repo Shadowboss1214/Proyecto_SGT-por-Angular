@@ -1,5 +1,6 @@
 FROM php:8.1-cli
 
+# Cache bust: 2026-05-17
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -22,7 +23,7 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-intl
 
-# Eliminar modo desarrollo para que no cargue Laminas\Development
+# Eliminar modo desarrollo
 RUN rm -f config/development.config.php
 
 # Crear carpeta de caché y dar permisos de escritura
