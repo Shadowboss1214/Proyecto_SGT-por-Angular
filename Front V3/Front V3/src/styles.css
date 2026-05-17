@@ -36,3 +36,51 @@ input:focus, select:focus {
   outline: none;
   border-color: #3b82f6;
 }
+
+/* ── Loading state global ───────────────────────────── */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 14px;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.loading-state p { margin: 0; }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  display: inline-block;
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
+.spinner--sm {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+/* ── Loading state en páginas de detalle ────────────── */
+.loading { color: #64748b; padding: 40px 0; text-align: center; }
+
+/* ── Mensajes de error en formularios de login ──────── */
+.error-msg {
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin: 4px 0 0;
+  text-align: center;
+}

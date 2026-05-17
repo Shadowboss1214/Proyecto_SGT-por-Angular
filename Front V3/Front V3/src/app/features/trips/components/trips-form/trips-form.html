@@ -1,24 +1,42 @@
-<form [formGroup]="form" (ngSubmit)="onSubmit()"> <label>Vehículo</label>
-  <select formControlName="id_transport"> <option [value]="null" disabled>Selecciona un vehículo</option>
-    @for (t of transport; track t.id_transport) {
-      <option [value]="t.id_transport">{{ t.name }}</option>
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+  <div class="field">
+    <label>Vehículo</label>
+    <select formControlName="id_transport">
+      <option [value]="null" disabled>Selecciona un vehículo</option>
+      @for (t of transport; track t.id_transport) {
+        <option [value]="t.id_transport">{{ t.name }}</option>
+      }
+    </select>
+    @if (form.get('id_transport')?.touched && form.get('id_transport')?.invalid) {
+      <small>El vehículo es obligatorio</small>
     }
-  </select>
+  </div>
 
-  <label>Empleado</label>
-  <select formControlName="id_employee"> <option [value]="null" disabled>Selecciona un empleado</option>
-    @for (e of employes; track e.id_employee) {
-      <option [value]="e.id_employee">{{ e.name }}</option>
+  <div class="field">
+    <label>Empleado</label>
+    <select formControlName="id_employee">
+      <option [value]="null" disabled>Selecciona un empleado</option>
+      @for (e of employes; track e.id_employee) {
+        <option [value]="e.id_employee">{{ e.name }}</option>
+      }
+    </select>
+    @if (form.get('id_employee')?.touched && form.get('id_employee')?.invalid) {
+      <small>El empleado es obligatorio</small>
     }
-  </select>
+  </div>
 
-  <label>Ruta</label>
-  <select formControlName="id_route">
-    <option [value]="null" disabled>Selecciona una ruta</option>
-    @for (r of tripRoute; track r.id_route) {
-      <option [value]="r.id_route">{{ r.origin }} - {{ r.destine }}</option>
+  <div class="field">
+    <label>Ruta</label>
+    <select formControlName="id_route">
+      <option [value]="null" disabled>Selecciona una ruta</option>
+      @for (r of tripRoute; track r.id_route) {
+        <option [value]="r.id_route">{{ r.origin }} - {{ r.destine }}</option>
+      }
+    </select>
+    @if (form.get('id_route')?.touched && form.get('id_route')?.invalid) {
+      <small>La ruta es obligatoria</small>
     }
-  </select>
+  </div>
 
   <div class="field">
     <label>Ganancia</label>

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { combineLatest } from 'rxjs';
@@ -30,10 +30,11 @@ export class DashboardComponent implements OnInit {
   private transportService = inject(TransportService);
 
   /** Service for trip data retrieval */
-  private tripService = inject(TripService);
+  private tripService  = inject(TripService);
 
   /** Service for employee data retrieval */
-  private employeeService = inject(EmployeeService);
+  private employeeService  = inject(EmployeeService);
+  private cdr              = inject(ChangeDetectorRef);
 
     /**
    * Role of the authenticated user, resolved from the route tree.
@@ -45,6 +46,7 @@ export class DashboardComponent implements OnInit {
     .map(r => r.snapshot.data['role'])
     .find(role => !!role) as 'admin' | 'driver';
 
+  loading = true;
     /**
    * List of statistic cards to display on the dashboard.
    * Each entry contains a title and a computed value.
@@ -73,10 +75,13 @@ export class DashboardComponent implements OnInit {
       this.transportService.getLatestTransports(),
       this.tripService.getLatestTrips(),
       this.employeeService.getLatestEmployees()
-    ]).subscribe(([transports, trips, employees]) => {
-      const today = new Date().toISOString().split('T')[0];
-      const tripsToday = trips.filter(t => t.date?.startsWith(today)).length;
-      const activeTransports = transports.filter(t => t.status === 'activo' || t.status === 'ACTIVO').length;
+    ]).subscribe({
+      next: ([transports, trips, employees]) => {
+        const today = new Date().toISOString().split('T')[0];
+        const tripsToday = trips.filter(t => t.date?.startsWith(today)).length;
+        const activeTransports = transports.filter(
+          t => t.status?.toLowerCase() === 'activo'
+        ).length;
 
       this.stats = [
         { title: 'Total de vehículos',  value: transports.length },
@@ -85,7 +90,7 @@ export class DashboardComponent implements OnInit {
         { title: 'Total de empleados',  value: employees.length },
         { title: 'Total de viajes',     value: trips.length }
       ];
-    });
+    }})
   }
 
    /**
@@ -95,16 +100,23 @@ export class DashboardComponent implements OnInit {
    */
   private loadDriverStats() {
     const employeeId = Number(this.authService.getEmployeeId());
+    this.tripService.getLatestTrips().subscribe({
+      next: trips => {
+        const myTrips = trips.filter(t => t.id_employee === employeeId);
+        const lastTrip = myTrips[myTrips.length - 1];
 
-    this.tripService.getLatestTrips().subscribe(trips => {
-      const myTrips = trips.filter(t => t.id_employee === employeeId);
-      const lastTrip = myTrips[myTrips.length - 1];
-
-      this.stats = [
-        { title: 'Mis viajes totales', value: myTrips.length },
-        { title: 'Último viaje',       value: lastTrip ? `Ruta ${lastTrip.id_route}` : 'Sin viajes' },
-        { title: 'Fecha último viaje', value: lastTrip?.date ?? '—' }
-      ];
+        this.stats = [
+          { title: 'Mis viajes totales', value: myTrips.length },
+          { title: 'Último viaje',       value: lastTrip ? `Ruta ${lastTrip.id_route}` : 'Sin viajes' },
+          { title: 'Fecha último viaje', value: lastTrip?.date ?? '—' }
+        ];
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 }

@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { EmployeeService } from '../../services/employes';
 import { Employee } from '../../models/employee';
 import { CommonModule } from '@angular/common';
 import { NavigationService } from '../../../../core/services/nav.service';
 import { EmployeeFormComponent } from '../../components/employee-form/employee-form';
+import { QrService } from '../../../../core/services/qr.service';
 
 /**
  * Shared view/edit/create component for the employee detail screen.
@@ -23,15 +24,16 @@ import { EmployeeFormComponent } from '../../components/employee-form/employee-f
 })
 export class EmployeeDetailComponent implements OnInit {
 
-  /** The loaded employee record; undefined in create mode or when the ID is not found. */
+  private route = inject(ActivatedRoute);
+  private router = inject(NavigationService);
+  private service = inject(EmployeeService);
+  private qrService = inject(QrService);
+  private cdr = inject(ChangeDetectorRef);
+
   employee?: Employee;
   isEdit = false;
-
-  constructor(
-    private route: ActivatedRoute,
-    private router: NavigationService,
-    private service: EmployeeService
-  ) {}
+  loading = false;
+  qrDataUrl: string | null = null;
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
@@ -41,13 +43,44 @@ export class EmployeeDetailComponent implements OnInit {
     this.isEdit = url.includes('edit') || isNew;
 
     if (id && !isNew) {
-      this.service.getById(Number(id)).subscribe(emp => this.employee = emp);
+      this.loading = true;
+      this.service.getById(Number(id)).subscribe({
+        next: emp => {
+          this.employee = emp;
+          this.loading = false;
+          this.cdr.detectChanges();
+          this.loadQr('employee', emp.id_employee);
+        },
+        error: () => {
+          this.loading = false;
+          this.cdr.detectChanges();
+        }
+      });
     }
+  }
+
+  private async loadQr(entity: string, id: number) {
+    try {
+      this.qrDataUrl = await this.qrService.generateQr(entity, id);
+    } catch { }
+    this.cdr.detectChanges();
+  }
+
+  downloadQr() {
+    if (!this.qrDataUrl || !this.employee) return;
+    const a = document.createElement('a');
+    a.href = this.qrDataUrl;
+    a.download = `employee-${this.employee.id_employee}-qr.png`;
+    a.click();
   }
 
   delete(id: string) {
     this.service.delete(Number(id)).subscribe(() => {
       this.router.navigate(['/employee']);
     });
+  }
+
+  goBack() {
+    this.router.navigate(['/employee']);
   }
 }

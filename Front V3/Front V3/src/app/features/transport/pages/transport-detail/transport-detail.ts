@@ -1,10 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { TransportService } from '../../services/transport';
 import { Transport } from '../../models/transport';
 import { CommonModule } from '@angular/common';
 import { NavigationService } from '../../../../core/services/nav.service';
 import { TransportFormComponent } from '../../components/transport-form/transport-form';
+import { QrService } from '../../../../core/services/qr.service';
+
 
 /**
  * Detail component for a single transport unit.
@@ -23,22 +25,18 @@ import { TransportFormComponent } from '../../components/transport-form/transpor
 })
 export class TransportDetailComponent implements OnInit {
 
-  /** Transport record loaded from the service. Undefined until data is fetched */
   transport?: Transport;
+
+  private route = inject(ActivatedRoute);
+  private router = inject(NavigationService);
+  private service = inject(TransportService);
+  private qrService = inject(QrService);
+  private cdr = inject(ChangeDetectorRef);
 
   /** Whether the component is in edit or create mode */
   isEdit = false;
-
-   /**
-   * @param route   - Provides access to the current route snapshot (URL segments and params)
-   * @param router  - Role-aware navigation service for redirecting after delete
-   * @param service - Service that handles transport data fetching and mutations
-   */
-  constructor(
-    private route: ActivatedRoute,
-    private router: NavigationService,
-    private service: TransportService
-  ) {}
+  loading = false;
+  qrDataUrl: string | null = null;
 
   /**
    * Lifecycle hook that resolves the operating mode and loads transport data.
@@ -55,11 +53,37 @@ export class TransportDetailComponent implements OnInit {
     this.isEdit = url.includes('edit') || isNew;
 
     if (id && !isNew) {
-      this.service.getLatestTransports().subscribe(() => {
-        this.transport = this.service.getById(Number(id));
+      this.loading = true;
+      this.service.getById(Number(id)).subscribe({
+        next: t => {
+          this.transport = t;
+          this.loading = false;
+          this.cdr.detectChanges();
+          this.loadQr('transport', t.id_transport);
+        },
+        error: () => {
+          this.loading = false;
+          this.cdr.detectChanges();
+        }
       });
     }
   }
+
+  private async loadQr(entity: string, id: number) {
+    try {
+      this.qrDataUrl = await this.qrService.generateQr(entity, id);
+    } catch { }
+    this.cdr.detectChanges();
+  }
+
+  downloadQr() {
+    if (!this.qrDataUrl || !this.transport) return;
+    const a = document.createElement('a');
+    a.href = this.qrDataUrl;
+    a.download = `transport-${this.transport.id_transport}-qr.png`;
+    a.click();
+  }
+
 
    /**
    * Deletes the transport unit with the given ID and navigates back to the list.
@@ -70,5 +94,9 @@ export class TransportDetailComponent implements OnInit {
     this.service.delete(Number(id)).subscribe(() => {
       this.router.navigate(['/transport']);
     });
+  }
+
+  goBack() {
+    this.router.navigate(['/transport']);
   }
 }

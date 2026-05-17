@@ -25,11 +25,12 @@ export class LogisticsDashboardComponent implements OnInit {
   private logisticsService = inject(LogisticsService);
 
   /** Service used to export report data to PDF and Excel formats */
-  private reportService = inject(ReportService);
+  private reportService    = inject(ReportService);
 
   /** Angular change detector used to force view update after async data load */
-  private cdr = inject(ChangeDetectorRef);
+  private cdr              = inject(ChangeDetectorRef);
 
+  loading = true;
   /** Total income across all trips */
   totalIncome = 0;
 
@@ -80,14 +81,15 @@ export class LogisticsDashboardComponent implements OnInit {
    * Triggers manual change detection after the async operation completes.
    */
   ngOnInit() {
-    this.logisticsService.getMetrics().subscribe(metrics => {
-      this.totalIncome = metrics.total_income;
-      this.totalCost   = metrics.total_cost;
-      this.profit      = metrics.profit;
-      this.efficiency  = metrics.efficiency;
-      this.totalTrips  = metrics.total_trips;
-      this.insight     = metrics.insight;
-      this.tripsByDay  = metrics.trips_by_day ?? {};
+    this.logisticsService.getMetrics().subscribe({
+      next: metrics => {
+        this.totalIncome = metrics.total_income;
+        this.totalCost   = metrics.total_cost;
+        this.profit      = metrics.profit;
+        this.efficiency  = metrics.efficiency;
+        this.totalTrips  = metrics.total_trips;
+        this.insight     = metrics.insight;
+        this.tripsByDay  = metrics.trips_by_day ?? {};
 
       this.barChartData = {
         labels: ['Ingresos', 'Gastos'],
@@ -98,7 +100,7 @@ export class LogisticsDashboardComponent implements OnInit {
         labels: Object.keys(metrics.trips_by_day),
         datasets: [{ label: 'Viajes por día', data: Object.values(metrics.trips_by_day) }]
       };
-    });
+    }});
     this.cdr.detectChanges();
   }
 
@@ -128,17 +130,10 @@ export class LogisticsDashboardComponent implements OnInit {
    * Exports the current logistics report data to a PDF file.
    * Uses `ReportService` with the computed `reportData` rows and column definitions.
    */
-  exportPdf(): void {
-    this.reportService.exportToPdf(this.reportData, this.columns, 'Reporte de Logística');
-  }
-
+  exportPdf()   { this.reportService.exportToPdf(this.reportData, this.columns, 'Reporte de Logística'); }
    /**
    * Exports the current logistics report data to an Excel (.xlsx) file.
    * Uses `ReportService` with the computed `reportData` rows and column definitions.
    */
-  exportExcel(): void {
-    this.reportService.exportToExcel(this.reportData, this.columns, 'reporte_logistica');
-  }
-
-
+  exportExcel() { this.reportService.exportToExcel(this.reportData, this.columns, 'reporte_logistica'); }
 }

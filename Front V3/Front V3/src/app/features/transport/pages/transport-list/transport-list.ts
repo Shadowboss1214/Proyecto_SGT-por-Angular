@@ -6,6 +6,9 @@ import { RouterModule } from '@angular/router';
 import { NavigationService } from '../../../../core/services/nav.service';
 import { TableComponent } from '../../../../shared/components/table/table';
 import { ReportService } from '../../../../core/services/report.service';
+import { QrModalComponent } from '../../../../shared/components/qr-modal/qr-modal';
+
+
 
 /**
  * Component that displays the paginated list of transport units.
@@ -16,7 +19,7 @@ import { ReportService } from '../../../../core/services/report.service';
 @Component({
   selector: 'app-transport-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, TableComponent],
+  imports: [CommonModule, RouterModule, TableComponent, QrModalComponent],
   templateUrl: './transport-list.html',
   styleUrl: './transport-list.css'
 })
@@ -28,19 +31,13 @@ export class TransportListComponent implements OnInit {
   /** Role-aware navigation service for redirecting to detail and edit views */
   private router = inject(NavigationService);
 
-  /** Alias for TransportService used in paginated data loading */
-  private transportService = inject(TransportService);
-
   /** Angular change detector used to force view update after async data load */
   private cdr = inject(ChangeDetectorRef);
 
   /** Service used to export report data to PDF and Excel formats */
   private reportService = inject(ReportService);
 
-  /** Legacy transport array, kept for potential direct assignments */
-  transport: Transport[] = [];
-
-  /** Current search string used to filter transports by name or plate */
+  loading = true;
   search = '';
 
   /** Current status filter value (e.g. `'ACTIVO'` | `'INACTIVO'`) */
@@ -55,35 +52,30 @@ export class TransportListComponent implements OnInit {
   /** Total number of pages available from the API */
   totalPages = 1;
 
-
   columns = [
-    { label: 'Nombre', field: 'name' },
-    { label: 'Tipo', field: 'type' },
-    { label: 'Placa', field: 'plate' },
-    { label: 'Estado', field: 'status' },
-    { label: 'Costo por Km', field: 'costperkm' },
-    { label: 'Costo de mantenimiento', field: 'maintenancecost' },
-    { label: 'Consumo de conbustible', field: 'fuelconsumption' }
+    { label: 'Nombre',               field: 'name' },
+    { label: 'Tipo',                 field: 'type' },
+    { label: 'Placa',                field: 'plate' },
+    { label: 'Estado',               field: 'status' },
+    { label: 'Costo por Km',         field: 'costperkm' },
+    { label: 'Costo mantenimiento',  field: 'maintenancecost' },
+    { label: 'Consumo combustible',  field: 'fuelconsumption' }
   ];
+
+  ngOnInit() { this.loadTransports(1); }
 
    /**
    * Navigates to the read-only detail view of the selected transport.
    *
    * @param item - Transport unit selected by the user
    */
-  onView(item: Transport) {
-    this.router.navigate(['/transport', item.id_transport]);
-  }
-
+  onView(item: Transport)   { this.router.navigate(['/transport', item.id_transport]); }
    /**
    * Navigates to the edit form for the selected transport.
    *
    * @param item - Transport unit to be edited
    */
-  onEdit(item: Transport) {
-    this.router.navigate(['/transport', item.id_transport, 'edit']);
-  }
-
+  onEdit(item: Transport)   { this.router.navigate(['/transport', item.id_transport, 'edit']); }
   /**
    * Deletes the selected transport unit and reloads the first page.
    *
@@ -91,8 +83,8 @@ export class TransportListComponent implements OnInit {
    */
   onDelete(item: Transport) {
     this.service.delete(item.id_transport).subscribe({
-      next: () => this.loadTransports(1),
-      error: (err: any) => console.error('Error al eliminar transporte:', err)
+      next: () => this.loadTransports(this.currentPage),
+      error: err => console.error('Error al eliminar transporte:', err)
     });
   }
 
@@ -103,57 +95,39 @@ export class TransportListComponent implements OnInit {
    * @returns Filtered array of transport units
    */
   get filtered(): Transport[] {
-    const search = this.search.toLowerCase();
-
-    return this.transports.filter(t => {
-      const matchSearch =
-        t.name.toLowerCase().includes(search) ||
-        t.plate.toLowerCase().includes(search);
-
-      const matchStatus =
-        !this.statusFilter || t.status === this.statusFilter;
-
-      return matchSearch && matchStatus;
-    });
+    const s = this.search.toLowerCase();
+    return this.transports.filter(t =>
+      (t.name?.toLowerCase().includes(s) || t.plate?.toLowerCase().includes(s)) &&
+      (!this.statusFilter || t.status === this.statusFilter)
+    );
   }
 
-   /**
+    /**
    * Updates the search string used to filter the transport list.
    * @param value - New search term entered by the user
    */
-  onSearchChange(value: string) {
-    this.search = value;
-  }
-
-  /**
-   * Updates the status filter used to filter the transport list.
-   *
-   * @param value - Status value selected by the user (e.g. `'ACTIVO'`)
-   */
-  onStatusChange(value: string) {
-    this.statusFilter = value;
-  }
-
-   /**
-   * Lifecycle hook that loads the first page of transports on component initialization.
-   */
-  ngOnInit() {
-    this.loadTransports(1);
-  }
+  onSearchChange(v: string) { this.search = v; }
+  onStatusChange(v: string) { this.statusFilter = v; }
 
   /**
    * Exports the currently filtered transport list to a PDF file.
    */
-  exportPdf(): void {
-    this.reportService.exportToPdf(this.filtered, this.columns, 'Reporte de Transportes');
-  }
+  exportPdf()   { this.reportService.exportToPdf(this.filtered, this.columns, 'Reporte de Transportes'); }
 
     /**
    * Exports the currently filtered transport list to an Excel (.xlsx) file.
    */
+  exportExcel() { this.reportService.exportToExcel(this.filtered, this.columns, 'reporte_transportes'); }
 
-  exportExcel(): void {
-    this.reportService.exportToExcel(this.filtered, this.columns, 'reporte_transportes');
+  showQrModal = false;
+  selectedTransport: any = null;
+
+  onQr(item: any) { this.selectedTransport = item; this.showQrModal = true; }
+  onQrClose()     { this.showQrModal = false; this.selectedTransport = null; }
+
+  changePage(page: number) {
+    this.currentPage = page;
+    this.loadTransports(page);
   }
 
   /**
@@ -163,29 +137,19 @@ export class TransportListComponent implements OnInit {
    * @param page - Page number to load (1-based index)
    */
   loadTransports(page: number) {
-    this.transportService.getLatestTransports(page).subscribe({
-      next: (data) => {
-        this.currentPage = this.transportService.page;
-        this.totalPages = this.transportService.total;
+    this.loading = true;
+    this.service.getLatestTransports(page).subscribe({
+      next: data => {
         this.transports = data;
-        console.log('Transportes cargados en el Front:', this.transports);
+        this.currentPage = this.service.page;
+        this.totalPages  = this.service.total;
+        this.loading = false;
         this.cdr.detectChanges();
       },
-      error: (err) => {
-        console.error('Error al mapear la API de transportes:', err);
+      error: () => {
+        this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
-
-   /**
-   * Handles page change events emitted by the table pagination controls.
-   * Updates the current page and fetches the corresponding transport data.
-   *
-   * @param page - New page number selected by the user
-   */
-  changePage(page: number) {
-    this.currentPage = page;
-    this.loadTransports(page);
-  }
-
 }

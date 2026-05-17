@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { NavigationService } from '../../../core/services/nav.service';
@@ -12,7 +13,7 @@ import { NavigationService } from '../../../core/services/nav.service';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './login.html',
   styleUrls: ['./login.css']
 })
@@ -20,6 +21,8 @@ export class LoginComponent {
 
   username = '';
   password = '';
+  loading  = false;
+  error    = '';
 
   /**
    * @param authService - Service that handles authentication, token storage and employee lookup
@@ -46,9 +49,12 @@ export class LoginComponent {
    */
   login() {
     if (!this.username || !this.password) {
-      alert('Por favor, llena todos los campos');
+      this.error = 'Por favor, llena todos los campos';
       return;
     }
+
+    this.loading = true;
+    this.error   = '';
 
     this.authService.login({ username: this.username, password: this.password }).subscribe({
       next: (response: any) => {
@@ -70,13 +76,20 @@ export class LoginComponent {
                 this.router.navigate(['/app/driver/dashboard']);
               }
             } else {
-              alert('Usuario no encontrado en la base de datos de empleados');
+              this.loading = false;
+              this.error = 'Usuario no encontrado en la base de datos de empleados';
             }
           },
-          error: () => alert('Error al verificar el rol del usuario')
+          error: () => {
+            this.loading = false;
+            this.error = 'Error al verificar el rol del usuario';
+          }
         });
       },
-      error: () => alert('Usuario o contraseña incorrectos')
+      error: () => {
+        this.loading = false;
+        this.error = 'Usuario o contraseña incorrectos';
+      }
     });
   }
 }

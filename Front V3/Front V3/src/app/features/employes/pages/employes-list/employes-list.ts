@@ -6,6 +6,7 @@ import { RouterModule } from '@angular/router';
 import { NavigationService } from '../../../../core/services/nav.service';
 import { TableComponent } from '../../../../shared/components/table/table';
 import { ReportService } from '../../../../core/services/report.service';
+import { QrModalComponent } from '../../../../shared/components/qr-modal/qr-modal';
 
 /**
  * View component for the employee list screen (/app/admin/employee).
@@ -18,7 +19,7 @@ import { ReportService } from '../../../../core/services/report.service';
 @Component({
   selector: 'app-employee-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, TableComponent],
+  imports: [CommonModule, RouterModule, TableComponent, QrModalComponent],
   templateUrl: './employes-list.html',
   styleUrl: './employes-list.css'
 })
@@ -28,11 +29,11 @@ export class EmployeeListComponent implements OnInit {
   private router = inject(NavigationService);
   private reportService = inject(ReportService);
   private cdr = inject(ChangeDetectorRef);
-  currentPage = 1;
-  totalPages  = this.service.total;
 
+  loading = true;
+  currentPage = 1;
+  totalPages = 1;
   search = '';
-  statusFilter = '';
   Employes: Employee[] = [];
 
   columns = [
@@ -67,9 +68,7 @@ export class EmployeeListComponent implements OnInit {
    * @param item - The employee row to delete.
    */
   onDelete(item: Employee) {
-    if (item.id_employee) {
-      this.service.delete(item.id_employee).subscribe();
-    }
+    if (item.id_employee) this.service.delete(item.id_employee).subscribe();
   }
 
   /**
@@ -78,24 +77,20 @@ export class EmployeeListComponent implements OnInit {
    */
   get filtered(): Employee[] {
     const search = this.search.toLowerCase();
-    return this.Employes.filter(e => e.name.toLowerCase().includes(search));
+    return this.Employes.filter(e => e.name?.toLowerCase().includes(search));
   }
 
   /** Syncs the search term from the template's input binding. */
   onSearchChange(value: string) { this.search = value; }
 
-  /** Syncs the status filter; kept for interface parity with other list views. */
-  onStatusChange(value: string) { this.statusFilter = value; }
+  exportPdf() { this.reportService.exportToPdf(this.filtered, this.columns, 'Reporte de Empleados'); }
+  exportExcel() { this.reportService.exportToExcel(this.filtered, this.columns, 'reporte_empleados.xlsx'); }
 
-  /** Exports the current filtered list as a PDF report via ReportService. */
-  exportPdf(): void {
-    this.reportService.exportToPdf(this.filtered, this.columns, 'Reporte de Empleados');
-  }
+  showQrModal = false;
+  selectedEmployee: any = null;
 
-  /** Exports the current filtered list as an Excel workbook via ReportService. */
-  exportExcel(): void {
-    this.reportService.exportToExcel(this.filtered, this.columns, 'reporte_empleados.xlsx');
-  }
+  onQr(item: any) { this.selectedEmployee = item; this.showQrModal = true; }
+  onQrClose() { this.showQrModal = false; this.selectedEmployee = null; }
 
   changePage(page: number) {
     this.currentPage = page;
@@ -103,10 +98,18 @@ export class EmployeeListComponent implements OnInit {
   }
 
   loadPage(page: number) {
-    this.service.getLatestEmployees(page).subscribe(() => {
-      this.currentPage = this.service.page;
-      this.totalPages  = this.service.total;
-      this.cdr.detectChanges();
+    this.loading = true;
+    this.service.getLatestEmployees(page).subscribe({
+      next: () => {
+        this.currentPage = this.service.page;
+        this.totalPages  = this.service.total;
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 }

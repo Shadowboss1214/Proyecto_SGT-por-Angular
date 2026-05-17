@@ -50,12 +50,11 @@ export class TransportService {
     return this.data$;
   }
 
-  /**
-   * Looks up a single transport by primary key in the local cache without a network call.
-   * @param id - The `id_transport` value to search for.
-   * @returns The matching Transport, or `undefined` if not cached.
-   */
-  getById(id: number): Transport | undefined {
+  getById(id: number): Observable<Transport> {
+    return this.http.get<Transport>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() });
+  }
+
+  findInCache(id: number): Transport | undefined {
     return this.data.find(t => t.id_transport === id);
   }
 

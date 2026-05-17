@@ -14,14 +14,6 @@ import { ReportService } from '../../../../core/services/report.service';
 import { QrModalComponent } from '../../../../shared/components/qr-modal/qr-modal';
 import { NavigationService } from '../../../../core/services/nav.service';
 
-/**
- * View component for the trip list screen (/app/admin/trips and /app/driver/trips).
- *
- * Combines three reactive streams (trips, transports, employees) via combineLatest
- * to build a denormalized view model for the generic table. For the driver role,
- * filters trips to only those assigned to the authenticated employee. Also
- * orchestrates the QR modal lifecycle via showQrModal and selectedTrip state.
- */
 @Component({
   selector: 'app-Trips-list',
   standalone: true,
@@ -31,54 +23,49 @@ import { NavigationService } from '../../../../core/services/nav.service';
 })
 export class TripsListComponent implements OnInit {
 
-  private service = inject(TripService);
+  private service          = inject(TripService);
   private transportService = inject(TransportService);
-  private employeeService = inject(EmployeeService);
-  private router = inject(NavigationService);
-  private route = inject(ActivatedRoute);
-  private authService = inject(AuthService);
-  private reportService = inject(ReportService);
-  private cdr = inject(ChangeDetectorRef);
+  private employeeService  = inject(EmployeeService);
+  private router           = inject(NavigationService);
+  private route            = inject(ActivatedRoute);
+  private authService      = inject(AuthService);
+  private reportService    = inject(ReportService);
+  private cdr              = inject(ChangeDetectorRef);
 
   /** Current user role, read from route data to determine visibility and filtering rules. */
   role = this.route.pathFromRoot
     .map(r => r.snapshot.data['role'])
     .find(role => !!role) as 'admin' | 'driver';
 
-  /** Local cache of employees, populated from EmployeeService stream on init. */
-  employes: Employee[] = [];
-
-  /** Local cache of transports, populated from TransportService stream on init. */
+  loading = true;
+  employes: Employee[]  = [];
   transport: Transport[] = [];
 
   /** Static route catalog; used to resolve route labels from FK values in trip records. */
   tripRoute: Route[] = [
     { id_route: 1, origin: 'Ciudad de México', destine: 'Guadalajara', distance: 541 },
-    { id_route: 2, origin: 'Guadalajara', destine: 'Monterrey', distance: 742 },
-    { id_route: 3, origin: 'Ciudad de México', destine: 'Monterrey', distance: 921 },
-    { id_route: 4, origin: 'Monterrey', destine: 'Tijuana', distance: 1891 },
-    { id_route: 5, origin: 'Ciudad de México', destine: 'Puebla', distance: 132 },
+    { id_route: 2, origin: 'Guadalajara',      destine: 'Monterrey',   distance: 742 },
+    { id_route: 3, origin: 'Ciudad de México', destine: 'Monterrey',   distance: 921 },
+    { id_route: 4, origin: 'Monterrey',        destine: 'Tijuana',     distance: 1891 },
+    { id_route: 5, origin: 'Ciudad de México', destine: 'Puebla',      distance: 132 },
   ];
 
   search = '';
-  statusFilter = '';
-
-  /** Raw trip array; scoped to the authenticated driver when role === 'driver'. */
   Trips: Trip[] = [];
+  tripsView: any[] = [];
   currentPage = 1;
-  totalPages = 1;
+  totalPages  = 1;
 
   columns = [
     { label: 'Transporte', field: 'transportName' },
-    { label: 'Empleado', field: 'employeeName' },
-    { label: 'Ruta', field: 'routeName' },
-    { label: 'Ingreso', field: 'income' },
-    { label: 'Costo', field: 'fuelcost' },
-    { label: 'Fecha', field: 'date' }
+    { label: 'Empleado',   field: 'employeeName' },
+    { label: 'Ruta',       field: 'routeName' },
+    { label: 'Ingreso',    field: 'income' },
+    { label: 'Costo',      field: 'fuelcost' },
+    { label: 'Fecha',      field: 'date' }
   ];
 
-  /** Denormalized view model: trips with resolved names injected for display in the table. */
-  tripsView: any[] = [];
+  private initialized = false;
 
   /**
    * Subscribes to all three service streams simultaneously so the table rebuilds
@@ -90,73 +77,49 @@ export class TripsListComponent implements OnInit {
     this.transportService.getLatestTransports().subscribe();
     this.employeeService.getLatestEmployees().subscribe();
 
-
     combineLatest([
       this.service.getAll(),
       this.transportService.getAll(),
       this.employeeService.getAll()
     ]).subscribe(([trips, transports, employees]) => {
       this.transport = transports;
-      this.employes = employees;
+      this.employes  = employees;
 
       if (this.role === 'driver') {
         const employeeId = Number(this.authService.getEmployeeId());
-        this.Trips = trips.filter(trip => trip.id_employee === employeeId);
+        this.Trips = trips.filter(t => t.id_employee === employeeId);
+        this.tripsView = this.buildView(this.Trips);
+        this.loading = false;
+        this.cdr.detectChanges();
       } else {
-        this.loadPage(1);
         this.Trips = trips;
+        this.tripsView = this.buildView(this.Trips);
+        if (!this.initialized) {
+          this.initialized = true;
+          this.loadPage(1);
+        }
       }
-
-      this.tripsView = this.Trips.map(t => ({
-        ...t,
-        transportName: this.getTransportName(t.id_transport),
-        employeeName: this.getEmployeeName(t.id_employee),
-        routeName: this.getRouteName(t.id_route)
-      }));
     });
   }
 
-  /** Navigates to the trip detail view. @param item - The trip row clicked. */
-  onView(item: Trip) {
-    this.router.navigate(['/trips', item.id_trip]);
+  private buildView(trips: Trip[]): any[] {
+    return trips.map(t => ({
+      ...t,
+      transportName: this.getTransportName(t.id_transport),
+      employeeName:  this.getEmployeeName(t.id_employee),
+      routeName:     this.getRouteName(t.id_route)
+    }));
   }
 
-  /** Navigates to the trip edit form. @param item - The trip row clicked. */
-  onEdit(item: Trip) {
-    this.router.navigate(['/trips', item.id_trip, 'edit']);
-  }
+  onView(item: any)   { this.router.navigate(['/trips', item.id_trip]); }
+  onEdit(item: any)   { this.router.navigate(['/trips', item.id_trip, 'edit']); }
+  onDelete(item: any) { this.service.delete(item.id_trip).subscribe(); }
 
-  /** Delegates deletion to TripService. @param item - The trip row to delete. */
-  onDelete(item: Trip) {
-    this.service.delete(item.id_trip).subscribe();
-  }
-
-  /**
-   * Resolves a transport name from the local cache by FK.
-   * Returns 'N/A' when not found — defensive because the list may load before
-   * the transport service emits its first value.
-   * @param id - The `id_transport` FK value.
-   */
-  getTransportName(id: number) {
-    return this.transport.find(t => t.id_transport === id)?.name ?? 'N/A';
-  }
-
-  /**
-   * Resolves an employee name from the local cache by FK.
-   * @param id - The `id_employee` FK value.
-   */
-  getEmployeeName(id: number) {
-    return this.employes.find(e => e.id_employee === id)?.name ?? 'N/A';
-  }
-
-  /**
-   * Resolves a route label ("origin - destine") from the static route list by FK.
-   * @param id - The `id_route` FK value.
-   */
+  getTransportName(id: number) { return this.transport.find(t => t.id_transport === id)?.name ?? 'N/A'; }
+  getEmployeeName(id: number)  { return this.employes.find(e => e.id_employee === id)?.name ?? 'N/A'; }
   getRouteName(id: number) {
-    const route = this.tripRoute.find(r => r.id_route === id);
-    if (!route) return 'N/A';
-    return `${route.origin} - ${route.destine}`;
+    const r = this.tripRoute.find(r => r.id_route === id);
+    return r ? `${r.origin} - ${r.destine}` : 'N/A';
   }
 
   /**
@@ -164,32 +127,17 @@ export class TripsListComponent implements OnInit {
    * No server round-trip; reflects the latest search value immediately.
    */
   get filtered() {
-    const search = this.search.toLowerCase();
+    const s = this.search.toLowerCase();
     return this.tripsView.filter(t =>
-      t.transportName.toLowerCase().includes(search) ||
-      t.employeeName.toLowerCase().includes(search)
+      t.transportName.toLowerCase().includes(s) ||
+      t.employeeName.toLowerCase().includes(s)
     );
   }
 
-  /** Syncs the search term from the template's input binding. */
-  onSearchChange(value: string) {
-    this.search = value;
-  }
+  onSearchChange(v: string) { this.search = v; }
 
-  /** Syncs the status filter; kept for interface parity with other list views. */
-  onStatusChange(value: string) {
-    this.statusFilter = value;
-  }
-
-  /** Exports the current filtered list as a PDF report via ReportService. */
-  exportPdf(): void {
-    this.reportService.exportToPdf(this.filtered, this.columns, 'Reporte de Viajes');
-  }
-
-  /** Exports the current filtered list as an Excel workbook via ReportService. */
-  exportExcel(): void {
-    this.reportService.exportToExcel(this.filtered, this.columns, 'reporte_viajes.xlsx');
-  }
+  exportPdf()   { this.reportService.exportToPdf(this.filtered, this.columns, 'Reporte de Viajes'); }
+  exportExcel() { this.reportService.exportToExcel(this.filtered, this.columns, 'reporte_viajes.xlsx'); }
 
   /** Controls QR modal visibility; true while the modal is open. */
   showQrModal = false;
@@ -197,32 +145,27 @@ export class TripsListComponent implements OnInit {
   /** The trip row currently selected for QR display; passed to QrModalComponent via @Input. */
   selectedTrip: any = null;
 
-  /**
-   * Opens the QR modal for the selected trip row.
-   * @param item - The trip row whose QR code the user wants to see.
-   */
-  onQr(item: any) {
-    this.selectedTrip = item;
-    this.showQrModal = true;
-  }
-
-  /** Resets QR modal state after the user dismisses it. */
-  onQrClose() {
-    this.showQrModal = false;
-    this.selectedTrip = null;
-  }
+  onQr(item: any) { this.selectedTrip = item; this.showQrModal = true; }
+  onQrClose()     { this.showQrModal = false; this.selectedTrip = null; }
 
   changePage(page: number) {
     this.currentPage = page;
-
     this.loadPage(page);
   }
 
   loadPage(page: number) {
-    this.service.getLatestTrips(page).subscribe(() => {
-      this.currentPage = this.service.page;
-      this.totalPages = this.service.total;
-      this.cdr.detectChanges();
+    this.loading = true;
+    this.service.getLatestTrips(page).subscribe({
+      next: () => {
+        this.currentPage = this.service.page;
+        this.totalPages  = this.service.total;
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 }

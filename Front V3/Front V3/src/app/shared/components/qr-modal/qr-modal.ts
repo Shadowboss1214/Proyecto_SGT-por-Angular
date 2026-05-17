@@ -20,10 +20,10 @@ export class QrModalComponent implements OnInit {
   private qrService = inject(QrService);
   private cdr = inject(ChangeDetectorRef);
 
-  /** The trip object whose QR code will be generated; must contain `id_trip`. */
-  @Input() trip: any = null;
+  @Input() entityType: string = '';
+  @Input() entityId: number = 0;
+  @Input() label: string = '';
 
-  /** Emitted when the user dismisses the modal via the close button or the overlay. */
   @Output() close = new EventEmitter<void>();
 
   /** Base64 PNG Data URL produced by QrService; null while loading or on error. */
@@ -42,11 +42,11 @@ export class QrModalComponent implements OnInit {
    * outside Angular's zone and the template would not update without an explicit check.
    */
   async ngOnInit() {
-    if (this.trip?.id_trip) {
+    if (this.entityType && this.entityId) {
       this.loading = true;
       this.error = false;
       try {
-        this.qrDataUrl = await this.qrService.generateTripQr(this.trip.id_trip);
+        this.qrDataUrl = await this.qrService.generateQr(this.entityType, this.entityId);
       } catch {
         this.error = true;
       } finally {
@@ -66,14 +66,11 @@ export class QrModalComponent implements OnInit {
     if (!this.qrDataUrl) return;
     const a = document.createElement('a');
     a.href = this.qrDataUrl;
-    a.download = `viaje-${this.trip.id_trip}-qr.png`;
+    a.download = `${this.entityType}-${this.entityId}-qr.png`;
     a.click();
   }
 
-  /** Emits the close event so the parent can hide this component. */
-  onClose() {
-    this.close.emit();
-  }
+  onClose() { this.close.emit(); }
 
   /**
    * Closes the modal when the user clicks the backdrop overlay.
