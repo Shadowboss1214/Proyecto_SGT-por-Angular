@@ -76,7 +76,7 @@ export const routes: Routes = [
       {
         path: 'driver', component: DriverLayout,
         canActivate: [authGuard],
-        data: { role: 'driver' },
+        data: { role: 'choufer' },
         children: [
           {
             path: 'dashboard',
