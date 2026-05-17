@@ -1,33 +1,22 @@
 <div class="layout">
-  <div class="sidebar">
-    <h2 class="logo">Sistema de Gestión de Transportes </h2>
-
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <p class="brand-name">Bus.inc</p>
+      <p class="brand-sub">Panel de Administración</p>
+    </div>
     <nav>
-      <button (click)="goToDashboard()" >
-        Principal
-      </button>
-
-      <button (click)="goToTransport()">
-        Transportes
-      </button>
-
-      <button (click)="goToEmployees()">
-        Empleados
-      </button>
-
-      <button (click)="goToTrips()">
-        Viajes
-      </button>
-
-      <button (click)="goToLogistic()">
-        Logística
-      </button>
-      
+      <button [class.active]="isActive('dashboard')" (click)="goToDashboard()">Principal</button>
+      <button [class.active]="isActive('employee')"  (click)="goToEmployees()">Empleados</button>
+      <button [class.active]="isActive('transport')" (click)="goToTransport()">Transportes</button>
+      <button [class.active]="isActive('trips')"     (click)="goToTrips()">Viajes</button>
+      <button [class.active]="isActive('logistics')" (click)="goToLogistic()">Logística</button>
     </nav>
-  </div>
+  </aside>
+
   <div class="content">
     <app-top-menu></app-top-menu>
-    <router-outlet></router-outlet>
+    <div class="page-body">
+      <router-outlet></router-outlet>
+    </div>
   </div>
-  
 </div>

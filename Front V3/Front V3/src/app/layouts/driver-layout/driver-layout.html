@@ -1,21 +1,19 @@
 <div class="layout">
-  <div class="sidebar">
-    <h2 class="logo">Sistema de Gestión de Transportes </h2>
-
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <p class="brand-name">Bus.inc</p>
+      <p class="brand-sub">Panel del Conductor</p>
+    </div>
     <nav>
-       <button (click)="goToDashboard()" >
-        Principal
-      </button>
-
-      <button (click)="goToTrips()">
-        Viajes
-      </button>
-
+      <button [class.active]="isActive('dashboard')" (click)="goToDashboard()">Principal</button>
+      <button [class.active]="isActive('trips')"     (click)="goToTrips()">Mis Viajes</button>
     </nav>
-  </div>
+  </aside>
+
   <div class="content">
     <app-top-menu></app-top-menu>
-    <router-outlet></router-outlet>
+    <div class="page-body">
+      <router-outlet></router-outlet>
+    </div>
   </div>
-  
 </div>
