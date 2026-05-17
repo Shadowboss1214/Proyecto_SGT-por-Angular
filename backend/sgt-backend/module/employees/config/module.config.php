@@ -1,4 +1,13 @@
 <?php
+/**
+ * Configuración del módulo employees: rutas, controladores, content negotiation y autorización.
+ *
+ * Define las rutas REST (/employees[/:employees_id]) y RPC (/register), mapea cada URL
+ * a su controlador, declara los verbos HTTP permitidos por colección/entidad y establece
+ * las reglas de autorización OAuth2 por verbo.
+ *
+ * @package employees
+ */
 return [
     'router' => [
         'routes' => [

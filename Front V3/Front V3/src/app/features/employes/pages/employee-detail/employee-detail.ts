@@ -6,6 +6,14 @@ import { CommonModule } from '@angular/common';
 import { NavigationService } from '../../../../core/services/nav.service';
 import { EmployeeFormComponent } from '../../components/employee-form/employee-form';
 
+/**
+ * Shared view/edit/create component for the employee detail screen.
+ *
+ * Determines its operating mode by inspecting URL segments on init: 'new' activates
+ * create mode (isEdit=true, no record loaded), ':id/edit' activates edit mode, and
+ * ':id' alone renders a read-only view. Delegates form rendering to EmployeeFormComponent,
+ * passing the loaded record and the primary key as @Input bindings.
+ */
 @Component({
   selector: 'app-Employee-detail',
   standalone: true,
@@ -15,6 +23,7 @@ import { EmployeeFormComponent } from '../../components/employee-form/employee-f
 })
 export class EmployeeDetailComponent implements OnInit {
 
+  /** The loaded employee record; undefined in create mode or when the ID is not found. */
   employee?: Employee;
   isEdit = false;
 

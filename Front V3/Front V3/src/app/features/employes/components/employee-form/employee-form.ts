@@ -6,6 +6,14 @@ import { EmployeeService } from '../../services/employes';
 import { NavigationService } from '../../../../core/services/nav.service';
 import { Validators } from '@angular/forms';
 
+/**
+ * Reactive form component for creating and editing employee records.
+ *
+ * Operates in two modes driven by @Input: without `data` it renders a blank create
+ * form; with `data` it pre-populates fields via patchValue() for editing.
+ * The `salary` field enforces a numeric pattern allowing up to two decimal places
+ * so malformed input is rejected at the form level before reaching the service.
+ */
 @Component({
   selector: 'app-Employee-form',
   standalone: true,
@@ -22,9 +30,18 @@ export class EmployeeFormComponent implements OnInit {
   ) {}
 
   form!: any;
+
+  /** Employee record to pre-populate the form in edit mode; absent for create mode. */
   @Input() data?: Employee;
+
+  /** String primary key passed by the parent in edit mode; absent means create. */
   @Input() id?: string;
 
+  /**
+   * Builds the reactive form group with validators and pre-populates it when `data`
+   * is provided. `salary` uses Validators.pattern to reject non-numeric or malformed
+   * decimal input before the value reaches EmployeeService.
+   */
   ngOnInit() {
     this.form = this.fb.group({
       name:     ['', Validators.required],
@@ -39,6 +56,12 @@ export class EmployeeFormComponent implements OnInit {
     }
   }
 
+  /**
+   * Persists the form value via EmployeeService and navigates back to the list.
+   *
+   * Precondition: the form must be valid (name required; salary numeric with ≤2 decimals).
+   * Calls update() when `id` is set (edit mode) or create() otherwise (create mode).
+   */
   submit() {
     if (this.form.invalid) return;
 

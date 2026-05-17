@@ -4,6 +4,14 @@ import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { NavigationService } from '../services/nav.service';
 
+/**
+ * Functional HTTP interceptor registered globally in app.config.ts.
+ *
+ * Clones every outgoing HttpRequest and injects the `Authorization: Bearer` header
+ * when a token exists in localStorage. Requests without a token (e.g., the login
+ * call itself) pass through unmodified so the OAuth2 endpoint never receives a
+ * stale or empty Bearer header.
+ */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   const nav = inject(NavigationService);
