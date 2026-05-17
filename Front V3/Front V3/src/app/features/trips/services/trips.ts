@@ -42,6 +42,10 @@ export class TripService {
     return this.data$;
   }
 
+  get snapshot(): Trip[] {
+    return [...this.data];
+  }
+
   getLatestTrips(page: Number = 1): Observable<Trip[]> {
     return this.http.get<any>(`${this.apiUrl}?page=${page}`, { headers: this.getHeaders() }).pipe(
       map(response => {

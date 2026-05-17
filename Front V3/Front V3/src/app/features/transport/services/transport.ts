@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { Transport } from '../models/transport';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { map, tap } from 'rxjs/operators';
@@ -32,12 +32,18 @@ export class TransportService {
     });
   }
 
+  get snapshot(): Transport[] {
+    return [...this.data];
+  }
+
   getAll(): Observable<Transport[]> {
     return this.data$;
   }
 
-  getById(id: number): Transport | undefined {
-    return this.data.find(t => t.id_transport === id);
+  getById(id: number): Observable<Transport> {
+    const cached = this.data.find(t => t.id_transport === id);
+    if (cached) return of(cached);
+    return this.http.get<Transport>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() });
   }
 
   create(data: Transport): Observable<any> {

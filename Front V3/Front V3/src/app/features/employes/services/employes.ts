@@ -39,6 +39,10 @@ export class EmployeeService {
     this.data = [];
   }
 
+  get snapshot(): Employee[] {
+    return [...this.data];
+  }
+
   getAll(): Observable<Employee[]> {
     return this.data$;
   }
