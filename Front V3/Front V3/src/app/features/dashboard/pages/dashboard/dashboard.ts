@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-import { combineLatest } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 import { AuthService } from '../../../../core/services/auth.service';
 import { TransportService } from '../../../transport/services/transport';
 import { TripService } from '../../../trips/services/trips';
@@ -71,45 +71,27 @@ export class DashboardComponent implements OnInit {
    * then computes summary metrics such as active vehicles and trips made today.
    */
   private loadAdminStats() {
-    combineLatest([
-      this.transportService.getLatestTransports(),
-      this.tripService.getLatestTrips(),
-      this.employeeService.getLatestEmployees()
+    const cachedTransports = this.transportService.snapshot;
+    const cachedTrips      = this.tripService.snapshot;
+    const cachedEmployees  = this.employeeService.snapshot;
+
+    const allCached = cachedTransports.length > 0
+      && cachedTrips.length > 0
+      && cachedEmployees.length > 0;
+
+    if (allCached) {
+      this.buildAdminStats(cachedTransports, cachedTrips, cachedEmployees);
+      this.loading = false;
+      return;
+    }
+
+    forkJoin([
+      cachedTransports.length > 0 ? of(cachedTransports) : this.transportService.getLatestTransports(),
+      cachedTrips.length > 0      ? of(cachedTrips)      : this.tripService.getLatestTrips(),
+      cachedEmployees.length > 0  ? of(cachedEmployees)  : this.employeeService.getLatestEmployees()
     ]).subscribe({
       next: ([transports, trips, employees]) => {
-        const today = new Date().toISOString().split('T')[0];
-        const tripsToday = trips.filter(t => t.date?.startsWith(today)).length;
-        const activeTransports = transports.filter(
-          t => t.status?.toLowerCase() === 'activo'
-        ).length;
-
-      this.stats = [
-        { title: 'Total de vehículos',  value: transports.length },
-        { title: 'Vehículos activos',   value: activeTransports },
-        { title: 'Viajes hoy',          value: tripsToday },
-        { title: 'Total de empleados',  value: employees.length },
-        { title: 'Total de viajes',     value: trips.length }
-      ];
-    }})
-  }
-
-   /**
-   * Loads statistics for driver users.
-   * Filters trips by the authenticated employee's ID and computes
-   * personal metrics such as total trips and the most recent trip.
-   */
-  private loadDriverStats() {
-    const employeeId = Number(this.authService.getEmployeeId());
-    this.tripService.getLatestTrips().subscribe({
-      next: trips => {
-        const myTrips = trips.filter(t => t.id_employee === employeeId);
-        const lastTrip = myTrips[myTrips.length - 1];
-
-        this.stats = [
-          { title: 'Mis viajes totales', value: myTrips.length },
-          { title: 'Último viaje',       value: lastTrip ? `Ruta ${lastTrip.id_route}` : 'Sin viajes' },
-          { title: 'Fecha último viaje', value: lastTrip?.date ?? '—' }
-        ];
+        this.buildAdminStats(transports, trips, employees);
         this.loading = false;
         this.cdr.detectChanges();
       },
@@ -118,5 +100,54 @@ export class DashboardComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  private buildAdminStats(transports: any[], trips: any[], employees: any[]) {
+    const today = new Date().toISOString().split('T')[0];
+    this.stats = [
+      { title: 'Total de vehículos', value: transports.length },
+      { title: 'Vehículos activos',  value: transports.filter(t => t.status?.toLowerCase() === 'activo').length },
+      { title: 'Viajes hoy',         value: trips.filter(t => t.date?.startsWith(today)).length },
+      { title: 'Total de empleados', value: employees.length },
+      { title: 'Total de viajes',    value: trips.length }
+    ];
+  }
+
+  /**
+   * Loads statistics for driver users.
+   * Filters trips by the authenticated employee's ID and computes
+   * personal metrics such as total trips and the most recent trip.
+   */
+  private loadDriverStats() {
+    const employeeId  = Number(this.authService.getEmployeeId());
+    const cachedTrips = this.tripService.snapshot;
+
+    if (cachedTrips.length > 0) {
+      this.buildDriverStats(cachedTrips, employeeId);
+      this.loading = false;
+      return;
+    }
+
+    this.tripService.getLatestTrips().subscribe({
+      next: trips => {
+        this.buildDriverStats(trips, employeeId);
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private buildDriverStats(trips: any[], employeeId: number) {
+    const myTrips  = trips.filter(t => t.id_employee === employeeId);
+    const lastTrip = myTrips[myTrips.length - 1];
+    this.stats = [
+      { title: 'Mis viajes totales', value: myTrips.length },
+      { title: 'Último viaje',       value: lastTrip ? `Ruta ${lastTrip.id_route}` : 'Sin viajes' },
+      { title: 'Fecha último viaje', value: lastTrip?.date ?? '—' }
+    ];
   }
 }

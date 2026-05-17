@@ -1,19 +1,4 @@
-.filters {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-  align-items: center;
-}
-
-.filters input {
-  flex: 1;
-}
-
-.filters button {
-  background: #3b82f6;
-  color: white;
-}
-
-.filters button:hover {
-  background: #2563eb;
-}
+/* Usa .filters del global styles.css */
+.filters input, .filters select { flex: 1; }
+.filters button { background: var(--color-primary); color: #fff; }
+.filters button:hover:not(:disabled) { background: var(--color-primary-dark); opacity: 1; }
