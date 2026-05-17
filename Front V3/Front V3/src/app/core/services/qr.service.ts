@@ -1,16 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 
-/**
- * Service responsible for generating QR codes that link to trip REST resources.
- *
- * Uses dynamic import of `qrcode` so the library is excluded from the initial bundle
- * and loaded on demand only when the user requests a QR code for the first time.
- */
 @Injectable({ providedIn: 'root' })
 export class QrService {
-  private readonly API_BASE = 'http://localhost:8080';
-  private readonly FRONTEND_BASE = 'http://localhost:4200/app/admin';
+  private readonly API_BASE = environment.apiUrl;
+  private readonly FRONTEND_BASE = `${environment.frontendUrl}/app/admin`;
   private auth = inject(AuthService);
 
   async generateQr(entity: string, id: number): Promise<string> {
@@ -24,7 +19,6 @@ export class QrService {
       if (data.data_url) return data.data_url;
       throw new Error('no-data-url');
     } catch {
-      // Fallback: genera el QR en el cliente apuntando al frontend
       const QRCode = await import('qrcode');
       return QRCode.toDataURL(`${this.FRONTEND_BASE}/${entity}/${id}`, { width: 256, margin: 2 });
     }
