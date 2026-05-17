@@ -5,6 +5,11 @@ Aplicación web full-stack para la gestión administrativa de transportes, desar
 
 El sistema permite a administradores gestionar empleados, vehículos y viajes a través de una interfaz SPA, y a conductores consultar los viajes que tienen asignados. Incluye autenticación OAuth2 con roles diferenciados, generación de códigos QR por viaje, exportación de reportes en PDF y Excel, y un dashboard logístico con gráficas.
 
+
+```
+Versión hosteada con vercel: https://proyecto-sgt-por-angular.vercel.app/Bus.inc.com
+```
+
 ## Equipo de desarrollo
 
 | Nombre                              |
