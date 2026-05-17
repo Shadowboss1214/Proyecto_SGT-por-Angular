@@ -1,7 +1,7 @@
 <div class="qr-overlay" (click)="onOverlayClick($event)">
   <div class="qr-modal">
     <div class="qr-modal__header">
-      <h3>Código QR — Viaje #{{ trip?.id_trip }}</h3>
+      <h3>Código QR — {{ label || (entityType + ' #' + entityId) }}</h3>
       <button class="qr-modal__close" (click)="onClose()">×</button>
     </div>
 
@@ -15,8 +15,8 @@
         </p>
       }
       @if (qrDataUrl && !loading) {
-        <img [src]="qrDataUrl" alt="QR Viaje {{ trip?.id_trip }}" class="qr-modal__image" />
-        <p class="qr-modal__url">http://localhost:8080/trips/{{ trip?.id_trip }}</p>
+        <img [src]="qrDataUrl" alt="QR {{ entityType }} {{ entityId }}" class="qr-modal__image" />
+        <p class="qr-modal__url">http://localhost:4200/app/admin/{{ entityType }}/{{ entityId }}</p>
       }
     </div>
 

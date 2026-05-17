@@ -36,7 +36,11 @@ export class TransportService {
     return this.data$;
   }
 
-  getById(id: number): Transport | undefined {
+  getById(id: number): Observable<Transport> {
+    return this.http.get<Transport>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() });
+  }
+
+  findInCache(id: number): Transport | undefined {
     return this.data.find(t => t.id_transport === id);
   }
 

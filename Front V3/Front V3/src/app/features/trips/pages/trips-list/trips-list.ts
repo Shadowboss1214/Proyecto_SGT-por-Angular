@@ -13,6 +13,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { ReportService } from '../../../../core/services/report.service';
 import { QrModalComponent } from '../../../../shared/components/qr-modal/qr-modal';
 import { NavigationService } from '../../../../core/services/nav.service';
+
 @Component({
   selector: 'app-Trips-list',
   standalone: true,
@@ -22,51 +23,51 @@ import { NavigationService } from '../../../../core/services/nav.service';
 })
 export class TripsListComponent implements OnInit {
 
-  private service = inject(TripService);
+  private service          = inject(TripService);
   private transportService = inject(TransportService);
-  private employeeService = inject(EmployeeService);
-  private router = inject(NavigationService);
-  private route = inject(ActivatedRoute);
-  private authService = inject(AuthService);
-  private reportService = inject(ReportService);
-  private cdr = inject(ChangeDetectorRef);
+  private employeeService  = inject(EmployeeService);
+  private router           = inject(NavigationService);
+  private route            = inject(ActivatedRoute);
+  private authService      = inject(AuthService);
+  private reportService    = inject(ReportService);
+  private cdr              = inject(ChangeDetectorRef);
 
   role = this.route.pathFromRoot
     .map(r => r.snapshot.data['role'])
     .find(role => !!role) as 'admin' | 'driver';
 
-  employes: Employee[] = [];
+  loading = true;
+  employes: Employee[]  = [];
   transport: Transport[] = [];
   tripRoute: Route[] = [
     { id_route: 1, origin: 'Ciudad de México', destine: 'Guadalajara', distance: 541 },
-    { id_route: 2, origin: 'Guadalajara', destine: 'Monterrey', distance: 742 },
-    { id_route: 3, origin: 'Ciudad de México', destine: 'Monterrey', distance: 921 },
-    { id_route: 4, origin: 'Monterrey', destine: 'Tijuana', distance: 1891 },
-    { id_route: 5, origin: 'Ciudad de México', destine: 'Puebla', distance: 132 },
+    { id_route: 2, origin: 'Guadalajara',      destine: 'Monterrey',   distance: 742 },
+    { id_route: 3, origin: 'Ciudad de México', destine: 'Monterrey',   distance: 921 },
+    { id_route: 4, origin: 'Monterrey',        destine: 'Tijuana',     distance: 1891 },
+    { id_route: 5, origin: 'Ciudad de México', destine: 'Puebla',      distance: 132 },
   ];
 
   search = '';
-  statusFilter = '';
   Trips: Trip[] = [];
+  tripsView: any[] = [];
   currentPage = 1;
-  totalPages = 1;
+  totalPages  = 1;
 
   columns = [
     { label: 'Transporte', field: 'transportName' },
-    { label: 'Empleado', field: 'employeeName' },
-    { label: 'Ruta', field: 'routeName' },
-    { label: 'Ingreso', field: 'income' },
-    { label: 'Costo', field: 'fuelcost' },
-    { label: 'Fecha', field: 'date' }
+    { label: 'Empleado',   field: 'employeeName' },
+    { label: 'Ruta',       field: 'routeName' },
+    { label: 'Ingreso',    field: 'income' },
+    { label: 'Costo',      field: 'fuelcost' },
+    { label: 'Fecha',      field: 'date' }
   ];
 
-  tripsView: any[] = [];
+  private initialized = false;
 
   ngOnInit() {
     this.service.getLatestTrips().subscribe();
     this.transportService.getLatestTransports().subscribe();
     this.employeeService.getLatestEmployees().subscribe();
-
 
     combineLatest([
       this.service.getAll(),
@@ -74,99 +75,82 @@ export class TripsListComponent implements OnInit {
       this.employeeService.getAll()
     ]).subscribe(([trips, transports, employees]) => {
       this.transport = transports;
-      this.employes = employees;
+      this.employes  = employees;
 
       if (this.role === 'driver') {
         const employeeId = Number(this.authService.getEmployeeId());
-        this.Trips = trips.filter(trip => trip.id_employee === employeeId);
+        this.Trips = trips.filter(t => t.id_employee === employeeId);
+        this.tripsView = this.buildView(this.Trips);
+        this.loading = false;
+        this.cdr.detectChanges();
       } else {
-        this.loadPage(1);
         this.Trips = trips;
+        this.tripsView = this.buildView(this.Trips);
+        if (!this.initialized) {
+          this.initialized = true;
+          this.loadPage(1);
+        }
       }
-
-      this.tripsView = this.Trips.map(t => ({
-        ...t,
-        transportName: this.getTransportName(t.id_transport),
-        employeeName: this.getEmployeeName(t.id_employee),
-        routeName: this.getRouteName(t.id_route)
-      }));
     });
   }
 
-  onView(item: Trip) {
-    this.router.navigate(['/trips', item.id_trip]);
+  private buildView(trips: Trip[]): any[] {
+    return trips.map(t => ({
+      ...t,
+      transportName: this.getTransportName(t.id_transport),
+      employeeName:  this.getEmployeeName(t.id_employee),
+      routeName:     this.getRouteName(t.id_route)
+    }));
   }
 
-  onEdit(item: Trip) {
-    this.router.navigate(['/trips', item.id_trip, 'edit']);
-  }
+  onView(item: any)   { this.router.navigate(['/trips', item.id_trip]); }
+  onEdit(item: any)   { this.router.navigate(['/trips', item.id_trip, 'edit']); }
+  onDelete(item: any) { this.service.delete(item.id_trip).subscribe(); }
 
-  onDelete(item: Trip) {
-    this.service.delete(item.id_trip).subscribe();
-  }
-
-  getTransportName(id: number) {
-    return this.transport.find(t => t.id_transport === id)?.name ?? 'N/A';
-  }
-
-  getEmployeeName(id: number) {
-    return this.employes.find(e => e.id_employee === id)?.name ?? 'N/A';
-  }
-
+  getTransportName(id: number) { return this.transport.find(t => t.id_transport === id)?.name ?? 'N/A'; }
+  getEmployeeName(id: number)  { return this.employes.find(e => e.id_employee === id)?.name ?? 'N/A'; }
   getRouteName(id: number) {
-    const route = this.tripRoute.find(r => r.id_route === id);
-    if (!route) return 'N/A';
-    return `${route.origin} - ${route.destine}`;
+    const r = this.tripRoute.find(r => r.id_route === id);
+    return r ? `${r.origin} - ${r.destine}` : 'N/A';
   }
 
   get filtered() {
-    const search = this.search.toLowerCase();
+    const s = this.search.toLowerCase();
     return this.tripsView.filter(t =>
-      t.transportName.toLowerCase().includes(search) ||
-      t.employeeName.toLowerCase().includes(search)
+      t.transportName.toLowerCase().includes(s) ||
+      t.employeeName.toLowerCase().includes(s)
     );
   }
 
-  onSearchChange(value: string) {
-    this.search = value;
-  }
+  onSearchChange(v: string) { this.search = v; }
 
-  onStatusChange(value: string) {
-    this.statusFilter = value;
-  }
-
-  exportPdf(): void {
-    this.reportService.exportToPdf(this.filtered, this.columns, 'Reporte de Viajes');
-  }
-
-  exportExcel(): void {
-    this.reportService.exportToExcel(this.filtered, this.columns, 'reporte_viajes.xlsx');
-  }
+  exportPdf()   { this.reportService.exportToPdf(this.filtered, this.columns, 'Reporte de Viajes'); }
+  exportExcel() { this.reportService.exportToExcel(this.filtered, this.columns, 'reporte_viajes.xlsx'); }
 
   showQrModal = false;
   selectedTrip: any = null;
 
-  onQr(item: any) {
-    this.selectedTrip = item;
-    this.showQrModal = true;
-  }
-
-  onQrClose() {
-    this.showQrModal = false;
-    this.selectedTrip = null;
-  }
+  onQr(item: any) { this.selectedTrip = item; this.showQrModal = true; }
+  onQrClose()     { this.showQrModal = false; this.selectedTrip = null; }
 
   changePage(page: number) {
     this.currentPage = page;
-
     this.loadPage(page);
   }
 
   loadPage(page: number) {
-    this.service.getLatestTrips(page).subscribe(() => {
-      this.currentPage = this.service.page;
-      this.totalPages = this.service.total;
-      this.cdr.detectChanges();
+    this.loading = true;
+    this.service.getLatestTrips(page).subscribe({
+      next: () => {
+        this.currentPage = this.service.page;
+        this.totalPages  = this.service.total;
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 }

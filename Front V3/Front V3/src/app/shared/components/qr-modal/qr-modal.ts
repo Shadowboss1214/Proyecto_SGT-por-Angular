@@ -13,7 +13,10 @@ export class QrModalComponent implements OnInit {
   private qrService = inject(QrService);
   private cdr = inject(ChangeDetectorRef);
 
-  @Input() trip: any = null;
+  @Input() entityType: string = '';
+  @Input() entityId: number = 0;
+  @Input() label: string = '';
+
   @Output() close = new EventEmitter<void>();
 
   qrDataUrl: string | null = null;
@@ -21,11 +24,11 @@ export class QrModalComponent implements OnInit {
   error = false;
 
   async ngOnInit() {
-    if (this.trip?.id_trip) {
+    if (this.entityType && this.entityId) {
       this.loading = true;
       this.error = false;
       try {
-        this.qrDataUrl = await this.qrService.generateTripQr(this.trip.id_trip);
+        this.qrDataUrl = await this.qrService.generateQr(this.entityType, this.entityId);
       } catch {
         this.error = true;
       } finally {
@@ -39,13 +42,11 @@ export class QrModalComponent implements OnInit {
     if (!this.qrDataUrl) return;
     const a = document.createElement('a');
     a.href = this.qrDataUrl;
-    a.download = `viaje-${this.trip.id_trip}-qr.png`;
+    a.download = `${this.entityType}-${this.entityId}-qr.png`;
     a.click();
   }
 
-  onClose() {
-    this.close.emit();
-  }
+  onClose() { this.close.emit(); }
 
   onOverlayClick(event: MouseEvent) {
     if ((event.target as HTMLElement).classList.contains('qr-overlay')) {

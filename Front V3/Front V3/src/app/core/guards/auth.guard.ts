@@ -40,13 +40,12 @@ function checkRole(route: ActivatedRouteSnapshot, auth: AuthService, nav: Naviga
   if (requiredRole) {
     const userRole = auth.getRole();
     if (userRole !== requiredRole) {
-      if(userRole == 'ADMIN'){
-      nav.navigate([`/app/${userRole}/dashboard`]);
-      return false;
-      }
-      else if(userRole == 'CHOUFER'){
-        nav.navigate([`/app/driver/dashboard`]);
-      return false;
+      if (userRole === 'admin') {
+        nav.navigate(['/app/admin/dashboard']);
+        return false;
+      } else if (userRole === 'choufer') {
+        nav.navigate(['/app/driver/dashboard']);
+        return false;
       }
     }
   }

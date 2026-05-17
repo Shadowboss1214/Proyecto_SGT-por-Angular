@@ -6,11 +6,12 @@ import { RouterModule } from '@angular/router';
 import { NavigationService } from '../../../../core/services/nav.service';
 import { TableComponent } from '../../../../shared/components/table/table';
 import { ReportService } from '../../../../core/services/report.service';
+import { QrModalComponent } from '../../../../shared/components/qr-modal/qr-modal';
 
 @Component({
   selector: 'app-employee-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, TableComponent],
+  imports: [CommonModule, RouterModule, TableComponent, QrModalComponent],
   templateUrl: './employes-list.html',
   styleUrl: './employes-list.css'
 })
@@ -20,13 +21,12 @@ export class EmployeeListComponent implements OnInit {
   private router = inject(NavigationService);
   private reportService = inject(ReportService);
   private cdr = inject(ChangeDetectorRef);
-  currentPage = 1;
-  totalPages  = this.service.total; 
 
+  loading = true;
+  currentPage = 1;
+  totalPages = 1;
   search = '';
-  statusFilter = '';
   Employes: Employee[] = [];
-  
 
   columns = [
     { label: 'Nombre', field: 'name' },
@@ -47,39 +47,43 @@ export class EmployeeListComponent implements OnInit {
   }
 
   onDelete(item: Employee) {
-    if (item.id_employee) {
-      this.service.delete(item.id_employee).subscribe();
-    }
+    if (item.id_employee) this.service.delete(item.id_employee).subscribe();
   }
 
   get filtered(): Employee[] {
     const search = this.search.toLowerCase();
-    return this.Employes.filter(e => e.name.toLowerCase().includes(search));
+    return this.Employes.filter(e => e.name?.toLowerCase().includes(search));
   }
 
   onSearchChange(value: string) { this.search = value; }
-  onStatusChange(value: string) { this.statusFilter = value; }
 
-  exportPdf(): void {
-    this.reportService.exportToPdf(this.filtered, this.columns, 'Reporte de Empleados');
-  }
+  exportPdf() { this.reportService.exportToPdf(this.filtered, this.columns, 'Reporte de Empleados'); }
+  exportExcel() { this.reportService.exportToExcel(this.filtered, this.columns, 'reporte_empleados.xlsx'); }
 
-  exportExcel(): void {
-    this.reportService.exportToExcel(this.filtered, this.columns, 'reporte_empleados.xlsx');
-  }
+  showQrModal = false;
+  selectedEmployee: any = null;
+
+  onQr(item: any) { this.selectedEmployee = item; this.showQrModal = true; }
+  onQrClose() { this.showQrModal = false; this.selectedEmployee = null; }
 
   changePage(page: number) {
-  this.currentPage = page;
+    this.currentPage = page;
+    this.loadPage(page);
+  }
 
-  this.loadPage(page);
-}
-
-loadPage(page: number) {
-  this.service.getLatestEmployees(page).subscribe(() => {
-    this.currentPage = this.service.page;   
-    this.totalPages  = this.service.total; 
-    this.cdr.detectChanges();
-  });
-}
-
+  loadPage(page: number) {
+    this.loading = true;
+    this.service.getLatestEmployees(page).subscribe({
+      next: () => {
+        this.currentPage = this.service.page;
+        this.totalPages  = this.service.total;
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
 }

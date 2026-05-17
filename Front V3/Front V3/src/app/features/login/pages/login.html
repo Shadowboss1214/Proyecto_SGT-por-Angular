@@ -1,16 +1,14 @@
 <div class="login-container">
-
   <div class="card">
-
     <h1>Iniciar Sesión</h1>
 
     <form (ngSubmit)="login()">
-
       <input
         type="text"
         [(ngModel)]="username"
         name="username"
         placeholder="Usuario"
+        [disabled]="loading"
       />
 
       <input
@@ -18,14 +16,21 @@
         [(ngModel)]="password"
         name="password"
         placeholder="Contraseña"
+        [disabled]="loading"
       />
 
-      <button type="submit">
-        Entrar
+      @if (error) {
+        <p class="error-msg">{{ error }}</p>
+      }
+
+      <button type="submit" [disabled]="loading">
+        @if (loading) {
+          <span class="spinner spinner--sm"></span>
+          Iniciando sesión...
+        } @else {
+          Entrar
+        }
       </button>
-
     </form>
-
   </div>
-
 </div>
