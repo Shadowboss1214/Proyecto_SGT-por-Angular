@@ -20,11 +20,11 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-intl
 
+# Eliminar modo desarrollo para que no cargue Laminas\Development
+RUN rm -f config/development.config.php
+
 # Crear carpeta de caché y dar permisos de escritura
 RUN mkdir -p data/cache && chmod -R 777 data/cache
-
-# Activar modo desarrollo para ver errores detallados
-RUN cp config/development.config.php.dist config/development.config.php
 
 EXPOSE 8080
 
