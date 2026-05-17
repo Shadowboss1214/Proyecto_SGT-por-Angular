@@ -1,36 +1,42 @@
 <h2>Transportes</h2>
 
 <div class="filters">
-    <input placeholder="Buscar por nombre o placa" #searchInput
-        (input)="onSearchChange(searchInput.value)" />
-
-    <select #statusSelect (change)="onStatusChange(statusSelect.value)">
-        <option value="">Todos</option>
-        <option value="Activo">Activo</option>
-        <option value="Inactivo">Inactivo</option>
-        <option value="Mantenimiento">En Mantenimiento</option>
-    </select>
-
-    <button routerLink="new">Nuevo</button>
-
-    <button class="btn-export btn-pdf" (click)="exportPdf()" title="Exportar a PDF">
-        📄 PDF
-    </button>
-
-    <button class="btn-export btn-excel" (click)="exportExcel()" title="Exportar a Excel">
-        📊 Excel
-    </button>
+  <input placeholder="Buscar por nombre o placa" #searchInput (input)="onSearchChange(searchInput.value)" />
+  <select #statusSelect (change)="onStatusChange(statusSelect.value)">
+    <option value="">Todos</option>
+    <option value="Activo">Activo</option>
+    <option value="Inactivo">Inactivo</option>
+    <option value="Mantenimiento">En Mantenimiento</option>
+  </select>
+  <button routerLink="new">Nuevo</button>
+  <button class="btn-export btn-pdf"   (click)="exportPdf()"   title="Exportar a PDF">📄 PDF</button>
+  <button class="btn-export btn-excel" (click)="exportExcel()" title="Exportar a Excel">📊 Excel</button>
 </div>
 
-<app-table 
-  [columns]="columns" 
-  [data]="filtered"
-  (view)="onView($event)"
-  (edit)="onEdit($event)"
-  (delete)="onDelete($event)"
+@if (loading) {
+  <div class="loading-state">
+    <span class="spinner"></span>
+    <p>Cargando transportes...</p>
+  </div>
+} @else {
+  <app-table
+    [columns]="columns"
+    [data]="filtered"
+    (view)="onView($event)"
+    (edit)="onEdit($event)"
+    (delete)="onDelete($event)"
+    (qr)="onQr($event)"
+    [currentPage]="currentPage"
+    [totalPages]="totalPages"
+    (pageChange)="changePage($event)">
+  </app-table>
+}
 
-  [currentPage]="currentPage"
-  [totalPages]="totalPages"
-
-  (pageChange)="changePage($event)">
-</app-table>
+@if (showQrModal && selectedTransport) {
+  <app-qr-modal
+    [entityType]="'transport'"
+    [entityId]="selectedTransport.id_transport"
+    [label]="'Vehículo: ' + selectedTransport.name"
+    (close)="onQrClose()">
+  </app-qr-modal>
+}

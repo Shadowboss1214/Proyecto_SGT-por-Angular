@@ -58,6 +58,17 @@ return [
                     ],
                 ],
             ],
+            'employees.rpc.qr' => [
+                'type' => 'Segment',
+                'options' => [
+                    'route' => '/qr/:entity/:id',
+                    'constraints' => ['entity' => '[a-z]+', 'id' => '[0-9]+'],
+                    'defaults' => [
+                        'controller' => 'employees\\V1\\Rpc\\Qr\\Controller',
+                        'action' => 'qr',
+                    ],
+                ],
+            ],
         ],
     ],
     'api-tools-versioning' => [
@@ -67,6 +78,7 @@ return [
             2 => 'employees.rest.transport',
             3 => 'employees.rest.trips',
             4 => 'employees.rpc.logistics',
+            5 => 'employees.rpc.qr',
         ],
     ],
     'api-tools-rest' => [
@@ -148,6 +160,7 @@ return [
             'employees\\V1\\Rest\\Transport\\Controller' => 'HalJson',
             'employees\\V1\\Rest\\Trips\\Controller' => 'HalJson',
             'employees\\V1\\Rpc\\Logistics\\Controller' => 'Json',
+            'employees\\V1\\Rpc\\Qr\\Controller' => 'Json',
         ],
         'accept_whitelist' => [
             'employees\\V1\\Rest\\Employees\\Controller' => [
@@ -171,6 +184,11 @@ return [
                 2 => 'application/json',
             ],
             'employees\\V1\\Rpc\\Logistics\\Controller' => [
+                0 => 'application/vnd.employees.v1+json',
+                1 => 'application/json',
+                2 => 'application/*+json',
+            ],
+            'employees\\V1\\Rpc\\Qr\\Controller' => [
                 0 => 'application/vnd.employees.v1+json',
                 1 => 'application/json',
                 2 => 'application/*+json',
@@ -401,6 +419,7 @@ return [
         'factories' => [
             'employees\\V1\\Rpc\\Register\\Controller' => \employees\V1\Rpc\Register\RegisterControllerFactory::class,
             'employees\\V1\\Rpc\\Logistics\\Controller' => \employees\V1\Rpc\Logistics\LogisticsControllerFactory::class,
+            'employees\\V1\\Rpc\\Qr\\Controller' => \employees\V1\Rpc\Qr\QrControllerFactory::class,
         ],
     ],
     'api-tools-rpc' => [
@@ -417,6 +436,13 @@ return [
                 0 => 'GET',
             ],
             'route_name' => 'employees.rpc.logistics',
+        ],
+        'employees\\V1\\Rpc\\Qr\\Controller' => [
+            'service_name' => 'qr',
+            'http_methods' => [
+                0 => 'GET',
+            ],
+            'route_name' => 'employees.rpc.qr',
         ],
     ],
 ];

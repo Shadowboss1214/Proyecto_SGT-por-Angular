@@ -1,23 +1,48 @@
-@if(!isEdit && employee){
-    <h2>Detalle</h2>
-<div class="container">
-    <p><strong>Nombre:</strong> {{ employee.name }}</p>
-    <p><strong>Salario:</strong> {{ employee.salary }}</p>
-    
-
-    <div class="actions">
-        <button [routerLink]="['edit']">Editar</button>
-        <button (click)="delete(employee.id_employee.toString())">Eliminar</button>
+@if (loading) {
+  <div class="container">
+    <button class="btn-back" (click)="goBack()">← Volver</button>
+    <div class="loading-state">
+      <span class="spinner"></span>
+      <p>Cargando empleado...</p>
     </div>
-</div>
+  </div>
 }
 
-@if(isEdit){
-    <h2>{{employee ? 'Editar Empleado':'Nuevo Empleado'}}</h2>
-<div class="container">
+@if (!loading && !isEdit && employee) {
+  <div class="container">
+    <button class="btn-back" (click)="goBack()">← Volver</button>
+    <h2>Detalle del Empleado</h2>
+
+    <p><strong>ID:</strong> {{ employee.id_employee }}</p>
+    <p><strong>Nombre:</strong> {{ employee.name }}</p>
+    <p><strong>Apellido:</strong> {{ employee.lastName }}</p>
+    <p><strong>Salario:</strong> {{ employee.salary }}</p>
+    <p><strong>Rol:</strong> {{ employee.role }}</p>
+    <p><strong>Usuario:</strong> {{ employee.username }}</p>
+
+    @if (qrDataUrl) {
+      <div class="qr-section">
+        <h4>Código QR</h4>
+        <img [src]="qrDataUrl" alt="QR Empleado {{ employee.id_employee }}" class="qr-image" />
+        <p class="qr-url">http://localhost:4200/app/admin/employee/{{ employee.id_employee }}</p>
+        <button class="btn-qr-download" (click)="downloadQr()">Descargar QR</button>
+      </div>
+    }
+
+    <div class="actions">
+      <button [routerLink]="['edit']">Editar</button>
+      <button class="btn-danger" (click)="delete(employee.id_employee.toString())">Eliminar</button>
+    </div>
+  </div>
+}
+
+@if (!loading && isEdit) {
+  <div class="container">
+    <button class="btn-back" (click)="goBack()">← Volver</button>
+    <h2>{{ employee ? 'Editar Empleado' : 'Nuevo Empleado' }}</h2>
     <app-Employee-form
-        [data]="employee"
-        [id]="employee?.id_employee?.toString()">
+      [data]="employee"
+      [id]="employee?.id_employee?.toString()">
     </app-Employee-form>
-</div>
+  </div>
 }

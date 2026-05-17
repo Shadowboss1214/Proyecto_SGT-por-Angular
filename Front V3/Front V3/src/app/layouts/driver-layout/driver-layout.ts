@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { NavigationService } from '../../core/services/nav.service';
 import { TopMenu } from '../../shared/components/top-menu/top-menu';
 
@@ -19,7 +19,12 @@ import { TopMenu } from '../../shared/components/top-menu/top-menu';
   styleUrl: './driver-layout.css',
 })
 export class DriverLayout {
-  private router = inject(NavigationService);
+  private router   = inject(NavigationService);
+  private ngRouter = inject(Router);
+
+  isActive(segment: string): boolean {
+    return this.ngRouter.url.includes(`/driver/${segment}`);
+  }
 
   /** Navigates to the driver dashboard. */
   goToDashboard() {

@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { AuthService } from './auth.service';
 
 /**
  * Service responsible for generating QR codes that link to trip REST resources.
@@ -9,19 +10,27 @@ import { Injectable } from '@angular/core';
 @Injectable({ providedIn: 'root' })
 export class QrService {
   private readonly API_BASE = 'http://localhost:8080';
+  private readonly FRONTEND_BASE = 'http://localhost:4200/app/admin';
+  private auth = inject(AuthService);
 
-  /**
-   * Generates a QR code PNG as a Data URL for the given trip.
-   *
-   * The QR encodes the REST endpoint URL `{API_BASE}/trips/{tripId}`, so scanning
-   * it provides direct API access to the trip resource without additional context.
-   * @param tripId - The `id_trip` of the trip to encode.
-   * @returns Promise resolving to a base64 PNG Data URL ready for use as an `<img>` src.
-   * @throws Error if the `qrcode` library fails to generate the image.
-   */
-  async generateTripQr(tripId: number): Promise<string> {
-    const QRCode = await import('qrcode');
-    const url = `${this.API_BASE}/trips/${tripId}`;
-    return QRCode.toDataURL(url, { width: 256, margin: 2 });
+  async generateQr(entity: string, id: number): Promise<string> {
+    try {
+      const token = this.auth.getToken();
+      const res = await fetch(`${this.API_BASE}/qr/${entity}/${id}`, {
+        headers: { 'Authorization': `Bearer ${token ?? ''}` }
+      });
+      if (!res.ok) throw new Error('backend-fail');
+      const data = await res.json();
+      if (data.data_url) return data.data_url;
+      throw new Error('no-data-url');
+    } catch {
+      // Fallback: genera el QR en el cliente apuntando al frontend
+      const QRCode = await import('qrcode');
+      return QRCode.toDataURL(`${this.FRONTEND_BASE}/${entity}/${id}`, { width: 256, margin: 2 });
+    }
+  }
+
+  generateTripQr(tripId: number): Promise<string> {
+    return this.generateQr('trips', tripId);
   }
 }

@@ -1,27 +1,50 @@
-@if(!isEdit && transport){
-    <h2>Detalle</h2>
-<div class="container">
+@if (loading) {
+  <div class="container">
+    <button class="btn-back" (click)="goBack()">← Volver</button>
+    <div class="loading-state">
+      <span class="spinner"></span>
+      <p>Cargando vehículo...</p>
+    </div>
+  </div>
+}
+
+@if (!loading && !isEdit && transport) {
+  <div class="container">
+    <button class="btn-back" (click)="goBack()">← Volver</button>
+    <h2>Detalle del Vehículo</h2>
+
+    <p><strong>ID:</strong> {{ transport.id_transport }}</p>
     <p><strong>Nombre:</strong> {{ transport.name }}</p>
     <p><strong>Tipo:</strong> {{ transport.type }}</p>
     <p><strong>Placa:</strong> {{ transport.plate }}</p>
     <p><strong>Estado:</strong> {{ transport.status }}</p>
     <p><strong>Costo por Km:</strong> {{ transport.costperkm }}</p>
     <p><strong>Costo de mantenimiento:</strong> {{ transport.maintenancecost }}</p>
-    <p><strong>Costo de combustible:</strong> {{ transport.fuelconsumption }}</p>
+    <p><strong>Consumo de combustible:</strong> {{ transport.fuelconsumption }} L/100km</p>
+
+    @if (qrDataUrl) {
+      <div class="qr-section">
+        <h4>Código QR</h4>
+        <img [src]="qrDataUrl" alt="QR Transporte {{ transport.id_transport }}" class="qr-image" />
+        <p class="qr-url">http://localhost:4200/app/admin/transport/{{ transport.id_transport }}</p>
+        <button class="btn-qr-download" (click)="downloadQr()">Descargar QR</button>
+      </div>
+    }
 
     <div class="actions">
-        <button [routerLink]="['edit']">Editar</button>
-        <button (click)="delete(transport.id_transport.toString())">Eliminar</button>
+      <button [routerLink]="['edit']">Editar</button>
+      <button class="btn-danger" (click)="delete(transport.id_transport.toString())">Eliminar</button>
     </div>
-</div>
+  </div>
 }
 
-@if(isEdit){
-    <h2>{{transport ? 'Editar Transporte':'Nuevo Transporte'}}</h2>
-<div class="container">
+@if (!loading && isEdit) {
+  <div class="container">
+    <button class="btn-back" (click)="goBack()">← Volver</button>
+    <h2>{{ transport ? 'Editar Transporte' : 'Nuevo Transporte' }}</h2>
     <app-transport-form
-        [data]="transport"
-        [id]="transport?.id_transport?.toString()">
+      [data]="transport"
+      [id]="transport?.id_transport?.toString()">
     </app-transport-form>
-</div>
+  </div>
 }

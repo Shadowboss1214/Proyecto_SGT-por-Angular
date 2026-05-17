@@ -6,11 +6,12 @@ import { RouterModule } from '@angular/router';
 import { NavigationService } from '../../../../core/services/nav.service';
 import { TableComponent } from '../../../../shared/components/table/table';
 import { ReportService } from '../../../../core/services/report.service';
+import { QrModalComponent } from '../../../../shared/components/qr-modal/qr-modal';
 
 @Component({
   selector: 'app-transport-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, TableComponent],
+  imports: [CommonModule, RouterModule, TableComponent, QrModalComponent],
   templateUrl: './transport-list.html',
   styleUrl: './transport-list.css'
 })
@@ -18,95 +19,85 @@ export class TransportListComponent implements OnInit {
 
   private service = inject(TransportService);
   private router = inject(NavigationService);
-  private transportService = inject(TransportService);
   private cdr = inject(ChangeDetectorRef);
   private reportService = inject(ReportService);
-  
-  transport: Transport[] = [];
+
+  loading = true;
   search = '';
   statusFilter = '';
   transports: Transport[] = [];
   currentPage = 1;
   totalPages = 1;
 
-
   columns = [
-    { label: 'Nombre', field: 'name' },
-    { label: 'Tipo', field: 'type' },
-    { label: 'Placa', field: 'plate' },
-    { label: 'Estado', field: 'status' },
-    { label: 'Costo por Km', field: 'costperkm' },
-    { label: 'Costo de mantenimiento', field: 'maintenancecost' },
-    { label: 'Consumo de conbustible', field: 'fuelconsumption' }
+    { label: 'Nombre',               field: 'name' },
+    { label: 'Tipo',                 field: 'type' },
+    { label: 'Placa',                field: 'plate' },
+    { label: 'Estado',               field: 'status' },
+    { label: 'Costo por Km',         field: 'costperkm' },
+    { label: 'Costo mantenimiento',  field: 'maintenancecost' },
+    { label: 'Consumo combustible',  field: 'fuelconsumption' }
   ];
 
-  onView(item: Transport) {
-    this.router.navigate(['/transport', item.id_transport]);
+  ngOnInit() {
+    if (this.service.snapshot.length > 0) {
+      this.transports = this.service.snapshot;
+      this.loading = false;
+      this.currentPage = this.service.page;
+      this.totalPages  = this.service.total;
+    } else {
+      this.loadTransports(1);
+    }
   }
 
-  onEdit(item: Transport) {
-    this.router.navigate(['/transport', item.id_transport, 'edit']);
-  }
-
+  onView(item: Transport)   { this.router.navigate(['/transport', item.id_transport]); }
+  onEdit(item: Transport)   { this.router.navigate(['/transport', item.id_transport, 'edit']); }
   onDelete(item: Transport) {
     this.service.delete(item.id_transport).subscribe({
-      next: () => this.loadTransports(1),
-      error: (err: any) => console.error('Error al eliminar transporte:', err)
+      next: () => this.loadTransports(this.currentPage),
+      error: err => console.error('Error al eliminar transporte:', err)
     });
   }
 
   get filtered(): Transport[] {
-    const search = this.search.toLowerCase();
-
-    return this.transports.filter(t => {
-      const matchSearch =
-        t.name.toLowerCase().includes(search) ||
-        t.plate.toLowerCase().includes(search);
-
-      const matchStatus =
-        !this.statusFilter || t.status === this.statusFilter;
-
-      return matchSearch && matchStatus;
-    });
-  }
-  onSearchChange(value: string) {
-    this.search = value;
+    const s = this.search.toLowerCase();
+    return this.transports.filter(t =>
+      (t.name?.toLowerCase().includes(s) || t.plate?.toLowerCase().includes(s)) &&
+      (!this.statusFilter || t.status === this.statusFilter)
+    );
   }
 
-  onStatusChange(value: string) {
-    this.statusFilter = value;
-  }
+  onSearchChange(v: string) { this.search = v; }
+  onStatusChange(v: string) { this.statusFilter = v; }
 
-  ngOnInit() {
-    this.loadTransports(1);
-  }
+  exportPdf()   { this.reportService.exportToPdf(this.filtered, this.columns, 'Reporte de Transportes'); }
+  exportExcel() { this.reportService.exportToExcel(this.filtered, this.columns, 'reporte_transportes'); }
 
-  exportPdf(): void {
-    this.reportService.exportToPdf(this.filtered, this.columns, 'Reporte de Transportes');
-  }
+  showQrModal = false;
+  selectedTransport: any = null;
 
-  exportExcel(): void {
-    this.reportService.exportToExcel(this.filtered, this.columns, 'reporte_transportes');
-  }
-
-  loadTransports(page: number) {
-    this.transportService.getLatestTransports(page).subscribe({
-      next: (data) => {
-        this.currentPage = this.transportService.page;
-        this.totalPages = this.transportService.total;
-        this.transports = data;
-        console.log('Transportes cargados en el Front:', this.transports);
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('Error al mapear la API de transportes:', err);
-      }
-    });
-  }
+  onQr(item: any) { this.selectedTransport = item; this.showQrModal = true; }
+  onQrClose()     { this.showQrModal = false; this.selectedTransport = null; }
 
   changePage(page: number) {
     this.currentPage = page;
     this.loadTransports(page);
   }
 
+  loadTransports(page: number) {
+    this.loading = true;
+    this.service.getLatestTransports(page).subscribe({
+      next: data => {
+        this.transports = data;
+        this.currentPage = this.service.page;
+        this.totalPages  = this.service.total;
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
 }

@@ -16,9 +16,10 @@ Chart.register(...registerables);
 export class LogisticsDashboardComponent implements OnInit {
 
   private logisticsService = inject(LogisticsService);
-  private reportService = inject(ReportService);
-  private cdr = inject(ChangeDetectorRef);
+  private reportService    = inject(ReportService);
+  private cdr              = inject(ChangeDetectorRef);
 
+  loading = true;
   totalIncome = 0;
   totalCost   = 0;
   profit      = 0;
@@ -44,26 +45,32 @@ export class LogisticsDashboardComponent implements OnInit {
   };
 
   ngOnInit() {
-    this.logisticsService.getMetrics().subscribe(metrics => {
-      this.totalIncome = metrics.total_income;
-      this.totalCost   = metrics.total_cost;
-      this.profit      = metrics.profit;
-      this.efficiency  = metrics.efficiency;
-      this.totalTrips  = metrics.total_trips;
-      this.insight     = metrics.insight;
-      this.tripsByDay  = metrics.trips_by_day ?? {};
+    this.logisticsService.getMetrics().subscribe({
+      next: metrics => {
+        this.totalIncome = metrics.total_income;
+        this.totalCost   = metrics.total_cost;
+        this.profit      = metrics.profit;
+        this.efficiency  = metrics.efficiency;
+        this.totalTrips  = metrics.total_trips;
+        this.insight     = metrics.insight;
+        this.tripsByDay  = metrics.trips_by_day ?? {};
 
-      this.barChartData = {
-        labels: ['Ingresos', 'Gastos'],
-        datasets: [{ label: 'Finanzas', data: [this.totalIncome, this.totalCost] }]
-      };
-
-      this.lineChartData = {
-        labels: Object.keys(metrics.trips_by_day),
-        datasets: [{ label: 'Viajes por día', data: Object.values(metrics.trips_by_day) }]
-      };
+        this.barChartData = {
+          labels: ['Ingresos', 'Gastos'],
+          datasets: [{ label: 'Finanzas', data: [this.totalIncome, this.totalCost] }]
+        };
+        this.lineChartData = {
+          labels: Object.keys(metrics.trips_by_day),
+          datasets: [{ label: 'Viajes por día', data: Object.values(metrics.trips_by_day) }]
+        };
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
     });
-    this.cdr.detectChanges();
   }
 
   get reportData() {
@@ -82,13 +89,6 @@ export class LogisticsDashboardComponent implements OnInit {
     return rows;
   }
 
-  exportPdf(): void {
-    this.reportService.exportToPdf(this.reportData, this.columns, 'Reporte de Logística');
-  }
-
-  exportExcel(): void {
-    this.reportService.exportToExcel(this.reportData, this.columns, 'reporte_logistica');
-  }
-
-
+  exportPdf()   { this.reportService.exportToPdf(this.reportData, this.columns, 'Reporte de Logística'); }
+  exportExcel() { this.reportService.exportToExcel(this.reportData, this.columns, 'reporte_logistica'); }
 }

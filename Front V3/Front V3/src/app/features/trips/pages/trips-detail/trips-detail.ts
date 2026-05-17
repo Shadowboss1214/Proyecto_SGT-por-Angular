@@ -1,20 +1,17 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
 import { TripService } from '../../services/trips';
-import { Trip } from '../../models/trips';
+import { TransportService } from '../../../transport/services/transport';
+import { EmployeeService } from '../../../employes/services/employes';
+import { Trip, Route } from '../../models/trips';
+import { Transport } from '../../../transport/models/transport';
+import { Employee } from '../../../employes/models/employee';
 import { CommonModule } from '@angular/common';
 import { TripsForm } from '../../components/trips-form/trips-form';
 import { QrService } from '../../../../core/services/qr.service';
 import { NavigationService } from '../../../../core/services/nav.service';
 
-/**
- * View component for the trip detail and edit screen (/app/.../trips/:id).
- *
- * Renders the trip form in read-only or edit mode depending on the URL path segments.
- * Also generates the trip's QR code inline (without the modal overlay) so the admin
- * can inspect it directly within the detail view. QR errors are suppressed so a
- * missing QR never prevents the detail view from loading.
- */
 @Component({
   selector: 'app-trip-detail',
   standalone: true,
@@ -23,54 +20,110 @@ import { NavigationService } from '../../../../core/services/nav.service';
   styleUrl: './trips-detail.css',
 })
 export class TripsDetailComponent implements OnInit {
-  private qrService = inject(QrService);
-  private cdr = inject(ChangeDetectorRef);
-  private nav = inject(NavigationService);
 
-  /** The loaded trip record; undefined while loading or when the ID is not found. */
+  private route            = inject(ActivatedRoute);
+  private service          = inject(TripService);
+  private transportService = inject(TransportService);
+  private employeeService  = inject(EmployeeService);
+  private qrService        = inject(QrService);
+  private cdr              = inject(ChangeDetectorRef);
+  private nav              = inject(NavigationService);
+
   trip?: Trip;
+  transports: Transport[] = [];
+  employees:  Employee[]  = [];
 
-  /** Base64 PNG Data URL of the trip's QR code; null until generation completes. */
+  tripRoutes: Route[] = [
+    { id_route: 1, origin: 'Ciudad de México', destine: 'Guadalajara', distance: 541 },
+    { id_route: 2, origin: 'Guadalajara',      destine: 'Monterrey',   distance: 742 },
+    { id_route: 3, origin: 'Ciudad de México', destine: 'Monterrey',   distance: 921 },
+    { id_route: 4, origin: 'Monterrey',        destine: 'Tijuana',     distance: 1891 },
+    { id_route: 5, origin: 'Ciudad de México', destine: 'Puebla',      distance: 132 },
+  ];
+
   qrDataUrl: string | null = null;
-  isEdit = false;
+  isEdit  = false;
+  loading = false;
 
-  constructor(
-    private route: ActivatedRoute,
-    private service: TripService
-  ) {}
-
-  /**
-   * Resolves the trip by route param `id`, determines view mode from URL segments,
-   * and triggers QR generation for existing trips.
-   *
-   * QR errors are silently caught so a failed image generation never breaks the
-   * detail view. ChangeDetectorRef.detectChanges() is called after the async QR
-   * promise resolves because the result lands outside Angular's zone.
-   */
   ngOnInit() {
-    const id = this.route.snapshot.paramMap.get('id');
+    const id  = this.route.snapshot.paramMap.get('id');
     const url = this.route.snapshot.url.map(s => s.path);
 
     const isNew = url.includes('new');
     this.isEdit = url.includes('edit') || isNew;
 
     if (id && !isNew) {
-      this.service.getById(+id).subscribe(trip => {
-        this.trip = trip;
-        this.qrService.generateTripQr(trip.id_trip)
-          .then(url => { this.qrDataUrl = url; this.cdr.detectChanges(); })
-          .catch(() => {});
-      });
+      const cachedTrip       = this.service.snapshot.find(t => t.id_trip === +id);
+      const cachedTransports = this.transportService.snapshot;
+      const cachedEmployees  = this.employeeService.snapshot;
+
+      if (cachedTrip && cachedTransports.length > 0 && cachedEmployees.length > 0) {
+        // Todo en caché: sin spinner, Angular lo renderiza en el primer ciclo
+        this.trip       = cachedTrip;
+        this.transports = cachedTransports;
+        this.employees  = cachedEmployees;
+        this.loadQr(cachedTrip.id_trip);
+      } else {
+        // Algún dato falta: ir a la red y mostrar spinner
+        this.loading = true;
+        forkJoin([
+          cachedTrip
+            ? of(cachedTrip)
+            : this.service.getById(+id),
+          cachedTransports.length > 0
+            ? of(cachedTransports)
+            : this.transportService.getLatestTransports(),
+          cachedEmployees.length > 0
+            ? of(cachedEmployees)
+            : this.employeeService.getLatestEmployees()
+        ]).subscribe({
+          next: ([trip, transports, employees]) => {
+            this.trip       = trip as Trip;
+            this.transports = transports as Transport[];
+            this.employees  = employees as Employee[];
+            this.loading    = false;
+            this.cdr.detectChanges();
+            this.loadQr((trip as Trip).id_trip);
+          },
+          error: () => {
+            this.loading = false;
+            this.cdr.detectChanges();
+          }
+        });
+      }
     }
   }
 
-  /**
-   * Deletes the trip and navigates back to the trip list.
-   * @param id - String form of the trip primary key taken from the route snapshot.
-   */
-  delete(id: string) {
-    this.service.delete(+id).subscribe(() => {
-      this.nav.navigate(['/trips']);
-    });
+  private async loadQr(id: number) {
+    try { this.qrDataUrl = await this.qrService.generateQr('trips', id); } catch { }
+    this.cdr.detectChanges();
   }
+
+  getTransportName(id: number): string {
+    return this.transports.find(t => t.id_transport === id)?.name ?? `ID ${id}`;
+  }
+
+  getEmployeeName(id: number): string {
+    const e = this.employees.find(emp => emp.id_employee === id);
+    return e ? `${e.name} ${e.lastName ?? ''}`.trim() : `ID ${id}`;
+  }
+
+  getRouteName(id: number): string {
+    const r = this.tripRoutes.find(r => r.id_route === id);
+    return r ? `${r.origin} → ${r.destine} (${r.distance} km)` : `ID ${id}`;
+  }
+
+  downloadQr() {
+    if (!this.qrDataUrl || !this.trip) return;
+    const a = document.createElement('a');
+    a.href  = this.qrDataUrl;
+    a.download = `trips-${this.trip.id_trip}-qr.png`;
+    a.click();
+  }
+
+  delete(id: string) {
+    this.service.delete(+id).subscribe(() => this.nav.navigate(['/trips']));
+  }
+
+  goBack() { this.nav.navigate(['/trips']); }
 }
