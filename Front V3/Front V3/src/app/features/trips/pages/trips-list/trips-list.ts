@@ -32,6 +32,7 @@ export class TripsListComponent implements OnInit {
   private reportService    = inject(ReportService);
   private cdr              = inject(ChangeDetectorRef);
 
+  /** Current user role, read from route data to determine visibility and filtering rules. */
   role = this.route.pathFromRoot
     .map(r => r.snapshot.data['role'])
     .find(role => !!role) as 'admin' | 'driver';
@@ -39,6 +40,8 @@ export class TripsListComponent implements OnInit {
   loading = true;
   employes: Employee[]  = [];
   transport: Transport[] = [];
+
+  /** Static route catalog; used to resolve route labels from FK values in trip records. */
   tripRoute: Route[] = [
     { id_route: 1, origin: 'Ciudad de México', destine: 'Guadalajara', distance: 541 },
     { id_route: 2, origin: 'Guadalajara',      destine: 'Monterrey',   distance: 742 },
@@ -64,6 +67,11 @@ export class TripsListComponent implements OnInit {
 
   private initialized = false;
 
+  /**
+   * Subscribes to all three service streams simultaneously so the table rebuilds
+   * whenever any of trips, transports, or employees changes.
+   * Driver role filtering uses the employee ID embedded in the JWT payload.
+   */
   ngOnInit() {
     this.service.getLatestTrips().subscribe();
     this.transportService.getLatestTransports().subscribe();
@@ -114,6 +122,10 @@ export class TripsListComponent implements OnInit {
     return r ? `${r.origin} - ${r.destine}` : 'N/A';
   }
 
+  /**
+   * Client-side filter over the denormalized tripsView; matches transport or employee name.
+   * No server round-trip; reflects the latest search value immediately.
+   */
   get filtered() {
     const s = this.search.toLowerCase();
     return this.tripsView.filter(t =>
@@ -127,7 +139,10 @@ export class TripsListComponent implements OnInit {
   exportPdf()   { this.reportService.exportToPdf(this.filtered, this.columns, 'Reporte de Viajes'); }
   exportExcel() { this.reportService.exportToExcel(this.filtered, this.columns, 'reporte_viajes.xlsx'); }
 
+  /** Controls QR modal visibility; true while the modal is open. */
   showQrModal = false;
+
+  /** The trip row currently selected for QR display; passed to QrModalComponent via @Input. */
   selectedTrip: any = null;
 
   onQr(item: any) { this.selectedTrip = item; this.showQrModal = true; }

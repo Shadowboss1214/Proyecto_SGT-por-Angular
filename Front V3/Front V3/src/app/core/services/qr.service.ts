@@ -1,6 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { AuthService } from './auth.service';
 
+/**
+ * Service responsible for generating QR codes that link to trip REST resources.
+ *
+ * Uses dynamic import of `qrcode` so the library is excluded from the initial bundle
+ * and loaded on demand only when the user requests a QR code for the first time.
+ */
 @Injectable({ providedIn: 'root' })
 export class QrService {
   private readonly API_BASE = 'http://localhost:8080';

@@ -1,10 +1,18 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { Trip } from '../models/trips';
 import { AuthService } from '../../../core/services/auth.service';
 
+/**
+ * Controller layer for the trip domain: owns canonical in-memory state and
+ * exposes reactive streams so that View components never write data directly.
+ *
+ * Follows the same BehaviorSubject pattern as EmployeeService and TransportService.
+ * Mutations flow through this service, which pushes updated snapshots to all
+ * subscribed views.
+ */
 @Injectable({ providedIn: 'root' })
 export class TripService {
 
@@ -12,6 +20,8 @@ export class TripService {
   private apiUrl = 'http://localhost:8080/trips';
 
   private subject = new BehaviorSubject<Trip[]>(this.data);
+
+  /** Live stream subscribed by View components; emits the full list on every mutation. */
   data$: Observable<Trip[]> = this.subject.asObservable();
   private _currentPage = 1;
   private _totalPages = 1;
@@ -29,6 +39,7 @@ export class TripService {
     });
   }
 
+  /** Pushes a copy of the current array to subscribers, triggering change detection. */
   private refresh(): void {
     this.subject.next([...this.data]);
   }
@@ -37,7 +48,7 @@ export class TripService {
     return this.data$;
   }
 
-  getLatestTrips(page: Number=1): Observable<Trip[]> {
+  getLatestTrips(page: Number = 1): Observable<Trip[]> {
     return this.http.get<any>(`${this.apiUrl}?page=${page}`, { headers: this.getHeaders() }).pipe(
       map(response => {
         const list = response._embedded?.trips || [];

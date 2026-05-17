@@ -1,10 +1,18 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { Employee } from '../models/employee';
 import { AuthService } from '../../../core/services/auth.service';
 
+/**
+ * Controller layer for the employee domain: owns canonical in-memory state and
+ * exposes reactive streams so that View components never write data directly.
+ *
+ * Acts as the MVC Controller in the Angular SPA: mutations flow through this
+ * service, which then pushes updated snapshots via BehaviorSubject to all
+ * subscribed views.
+ */
 @Injectable({ providedIn: 'root' })
 export class EmployeeService {
 
@@ -17,6 +25,8 @@ export class EmployeeService {
   get total() { return this._totalPages; }
 
   private dataSubject = new BehaviorSubject<Employee[]>(this.data);
+
+  /** Live stream subscribed by View components; emits the full list on every mutation. */
   data$: Observable<Employee[]> = this.dataSubject.asObservable();
 
   constructor(private http: HttpClient, private authService: AuthService) { }
@@ -29,6 +39,7 @@ export class EmployeeService {
     });
   }
 
+  /** Pushes a copy of the current array to subscribers, triggering change detection. */
   private refresh(): void {
     this.dataSubject.next([...this.data]);
   }
@@ -38,7 +49,6 @@ export class EmployeeService {
   }
 
   getLatestEmployees(page: number = 1): Observable<Employee[]> {
-   
     return this.http.get<any>(`${this.apiUrl}?page=${page}`, { headers: this.getHeaders() }).pipe(
       map(response => {
         console.log(response)

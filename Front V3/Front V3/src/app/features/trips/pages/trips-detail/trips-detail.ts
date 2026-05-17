@@ -12,6 +12,14 @@ import { TripsForm } from '../../components/trips-form/trips-form';
 import { QrService } from '../../../../core/services/qr.service';
 import { NavigationService } from '../../../../core/services/nav.service';
 
+/**
+ * View component for the trip detail and edit screen (/app/.../trips/:id).
+ *
+ * Renders the trip form in read-only or edit mode depending on the URL path segments.
+ * Also generates the trip's QR code inline (without the modal overlay) so the admin
+ * can inspect it directly within the detail view. QR errors are suppressed so a
+ * missing QR never prevents the detail view from loading.
+ */
 @Component({
   selector: 'app-trip-detail',
   standalone: true,
@@ -28,6 +36,7 @@ export class TripsDetailComponent implements OnInit {
   private cdr = inject(ChangeDetectorRef);
   private nav = inject(NavigationService);
 
+  /** The loaded trip record; undefined while loading or when the ID is not found. */
   trip?: Trip;
   transports: Transport[] = [];
   employees: Employee[] = [];
@@ -43,6 +52,14 @@ export class TripsDetailComponent implements OnInit {
   isEdit = false;
   loading = false;
 
+  /**
+   * Resolves the trip by route param `id`, determines view mode from URL segments,
+   * and triggers QR generation for existing trips.
+   *
+   * QR errors are silently caught so a failed image generation never breaks the
+   * detail view. ChangeDetectorRef.detectChanges() is called after the async QR
+   * promise resolves because the result lands outside Angular's zone.
+   */
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
     const url = this.route.snapshot.url.map(s => s.path);

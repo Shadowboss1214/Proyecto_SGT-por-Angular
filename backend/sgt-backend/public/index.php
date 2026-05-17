@@ -7,14 +7,19 @@
  */
 
 /**
- * CORS Fix para el SGT - Desarrollo
+ * Encabezados CORS para permitir que el frontend Angular (localhost:4200) envíe
+ * peticiones autenticadas al backend (localhost:8080).
+ *
+ * `Authorization` debe estar en Allow-Headers para que el Bearer token llegue al
+ * adaptador OAuth2 de Laminas. El preflight OPTIONS se responde aquí, antes de
+ * que el framework intente enrutar o autenticar la petición, porque Laminas no
+ * emite encabezados CORS por sí solo y rechazaría el preflight como unauthorized.
  */
 header("Access-Control-Allow-Origin: http://localhost:4200");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS, DELETE, PUT, PATCH");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept");
 header("Access-Control-Allow-Credentials: true");
 
-// Si es una petición de tipo OPTIONS (el "preflight" de Angular), respondemos 200 y salimos.
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     header("HTTP/1.1 200 OK");
     exit;

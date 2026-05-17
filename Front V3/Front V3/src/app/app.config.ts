@@ -7,6 +7,13 @@ import { LocationStrategy } from '@angular/common';
 import { FixedLocationStrategy } from './shared/components/fixed-url/fixed';
 
 
+/**
+ * Root application configuration.
+ *
+ * Registers the router and the HTTP client with the auth interceptor so that
+ * every outgoing request carries the Bearer token automatically, without any
+ * component needing to set the Authorization header explicitly.
+ */
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),

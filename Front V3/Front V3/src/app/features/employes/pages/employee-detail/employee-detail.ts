@@ -7,6 +7,14 @@ import { NavigationService } from '../../../../core/services/nav.service';
 import { EmployeeFormComponent } from '../../components/employee-form/employee-form';
 import { QrService } from '../../../../core/services/qr.service';
 
+/**
+ * Shared view/edit/create component for the employee detail screen.
+ *
+ * Determines its operating mode by inspecting URL segments on init: 'new' activates
+ * create mode (isEdit=true, no record loaded), ':id/edit' activates edit mode, and
+ * ':id' alone renders a read-only view. Delegates form rendering to EmployeeFormComponent,
+ * passing the loaded record and the primary key as @Input bindings.
+ */
 @Component({
   selector: 'app-Employee-detail',
   standalone: true,
