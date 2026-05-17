@@ -41,17 +41,19 @@ export const authGuard: CanActivateFn = (route: ActivatedRouteSnapshot, state: R
 
 function checkRole(route: ActivatedRouteSnapshot, auth: AuthService, nav: NavigationService): boolean {
   const requiredRole: string | undefined = route.data['role'];
-  if (requiredRole) {
-    const userRole = auth.getRole();
-    if (userRole !== requiredRole) {
-      if (userRole === 'admin') {
-        nav.navigate(['/app/admin/dashboard']);
-        return false;
-      } else if (userRole === 'choufer') {
-        nav.navigate(['/app/driver/dashboard']);
-        return false;
-      }
-    }
+  if (!requiredRole) return true;
+
+  const userRole = auth.getRole();
+  const isAdmin  = userRole === 'admin';
+  const isDriver = userRole === 'driver' || userRole === 'choufer' || userRole === 'chofer';
+
+  if (requiredRole === 'admin' && !isAdmin) {
+    nav.navigate(isDriver ? ['/app/driver/dashboard'] : ['/app/login']);
+    return false;
+  }
+  if (requiredRole === 'driver' && !isDriver) {
+    nav.navigate(isAdmin ? ['/app/admin/dashboard'] : ['/app/login']);
+    return false;
   }
   return true;
 }

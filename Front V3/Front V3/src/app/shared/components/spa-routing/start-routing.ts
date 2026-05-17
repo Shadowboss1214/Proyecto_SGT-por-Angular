@@ -34,21 +34,19 @@ export class StartPageComponent implements OnInit {
 
     if (!token) {
       localStorage.removeItem('role');
-      console.log('sesion')
-      this.router.navigate(['/login'], { replaceUrl: true });
+      this.router.navigate(['/app/login'], { replaceUrl: true });
       return;
     }
 
-    
-    const role = localStorage.getItem('role');
+    const role = (localStorage.getItem('role') ?? '').toLowerCase();
 
-    if (role === 'ADMIN') {
-      this.router.navigate(['/dashboard'], { replaceUrl: true });
-    } else if (role === 'DRIVER') {
-      this.router.navigate(['/dashboard'], { replaceUrl: true });
+    if (role === 'admin') {
+      this.router.navigate(['/app/admin/dashboard'], { replaceUrl: true });
+    } else if (role === 'driver' || role === 'choufer' || role === 'chofer') {
+      this.router.navigate(['/app/driver/dashboard'], { replaceUrl: true });
     } else {
       localStorage.removeItem('role');
-      this.router.navigate(['/login'], { replaceUrl: true });
+      this.router.navigate(['/app/login'], { replaceUrl: true });
     }
   }
 
