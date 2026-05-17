@@ -99,6 +99,9 @@ export class TripsListComponent implements OnInit {
   }
 
   private renderData(trips: Trip[], transports: Transport[], employees: Employee[]) {
+    console.log('Role:', this.role);
+    console.log('Employee ID:', this.authService.getEmployeeId());
+    console.log('Trips ids:', trips.map(t => t.id_employee));
     this.transport = transports;
     this.employes  = employees;
 
