@@ -34,7 +34,7 @@ export class TripsListComponent implements OnInit {
 
   role = this.route.pathFromRoot
     .map(r => r.snapshot.data['role'])
-    .find(role => !!role) as 'admin' | 'driver';
+    .find(role => !!role) as 'admin' | 'driver' | 'choufer';
 
   loading = true;
   employes: Employee[]   = [];
@@ -105,7 +105,7 @@ export class TripsListComponent implements OnInit {
     this.transport = transports;
     this.employes  = employees;
 
-    const filtered = this.role === 'driver'
+    const filtered = this.role === 'driver' || this.role === 'choufer'
       ? trips.filter(t => t.id_employee === Number(this.authService.getEmployeeId()))
       : trips;
 
