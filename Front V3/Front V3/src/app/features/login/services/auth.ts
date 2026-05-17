@@ -96,11 +96,17 @@ export class AuthService {
     }
   }
 
+  /**
+   * Reads the `employeeId` claim from the JWT payload.
+   * This claim is a custom extension added by the Laminas backend, not part of standard OAuth2.
+   * @returns The employee ID string, or empty string if the token is missing or lacks the claim.
+   */
   getEmployeeId(): string {
     // Esto es lo que busca trips-list.ts
     return this.getTokenPayload()?.employeeId || '';
   }
 
+  /** Removes the access token from `localStorage`, ending the browser session. */
   logout() {
     localStorage.removeItem('access_token');
   }

@@ -21,6 +21,14 @@ import { NavigationService } from '../../../../core/services/nav.service';
   templateUrl: './trips-list.html',
   styleUrl: './trips-list.css'
 })
+/**
+ * List component for the trips catalogue.
+ *
+ * Renders trips differently based on role: admins see all trips; drivers see only
+ * their own. Joins transport and employee records to display human-readable names
+ * instead of raw foreign keys. Supports in-memory search, pagination, QR modals,
+ * and PDF/Excel export.
+ */
 export class TripsListComponent implements OnInit {
 
   private service          = inject(TripService);
@@ -63,6 +71,11 @@ export class TripsListComponent implements OnInit {
     { label: 'Fecha',      field: 'date' }
   ];
 
+  /**
+   * Bootstraps the list from caches when all three services are warm; otherwise
+   * uses `forkJoin` to fetch trips, transports, and employees in a single round-trip.
+   * Role-based filtering is applied inside `renderData()`.
+   */
   ngOnInit() {
     const allCached = this.service.snapshot.length > 0
       && this.transportService.snapshot.length > 0
@@ -98,6 +111,13 @@ export class TripsListComponent implements OnInit {
     }
   }
 
+  /**
+   * Stores transport and employee arrays for lookup, then applies role-based filtering:
+   * drivers see only trips where `id_employee` matches their own ID; admins see all.
+   * @param trips - Raw trip records from the API or service cache.
+   * @param transports - All transport records used for name resolution.
+   * @param employees - All employee records used for name resolution.
+   */
   private renderData(trips: Trip[], transports: Transport[], employees: Employee[]) {
     this.transport = transports;
     this.employes  = employees;
@@ -110,6 +130,12 @@ export class TripsListComponent implements OnInit {
     this.tripsView = this.buildView(filtered);
   }
 
+  /**
+   * Denormalizes trip records by appending computed display fields so the generic
+   * `<app-table>` component can render them without knowing about the FK lookup tables.
+   * @param trips - Filtered trip records to transform.
+   * @returns Trip objects enriched with `transportName`, `employeeName`, and `routeName`.
+   */
   private buildView(trips: Trip[]): any[] {
     return trips.map(t => ({
       ...t,
@@ -119,21 +145,31 @@ export class TripsListComponent implements OnInit {
     }));
   }
 
+  /** Navigates to the read-only detail view for the selected trip. */
   onView(item: any)   { this.router.navigate(['/trips', item.id_trip]); }
+  /** Navigates to the edit form for the selected trip. */
   onEdit(item: any)   { this.router.navigate(['/trips', item.id_trip, 'edit']); }
+  /** Deletes the selected trip and reloads the current page. */
   onDelete(item: any) {
     this.service.delete(item.id_trip).subscribe({
       next: () => this.loadPage(this.currentPage)
     });
   }
 
+  /** @param id - `id_transport` FK. @returns Transport name or `'N/A'`. */
   getTransportName(id: number) { return this.transport.find(t => t.id_transport === id)?.name ?? 'N/A'; }
+  /** @param id - `id_employee` FK. @returns Employee name or `'N/A'`. */
   getEmployeeName(id: number)  { return this.employes.find(e => e.id_employee === id)?.name ?? 'N/A'; }
+  /** @param id - `id_route` FK. @returns `"Origin - Destination"` or `'N/A'`. */
   getRouteName(id: number) {
     const r = this.tripRoute.find(r => r.id_route === id);
     return r ? `${r.origin} - ${r.destine}` : 'N/A';
   }
 
+  /**
+   * Client-side filter over `tripsView` matching the search term against
+   * both `transportName` and `employeeName` simultaneously.
+   */
   get filtered() {
     const s = this.search.toLowerCase();
     return this.tripsView.filter(t =>
@@ -153,11 +189,17 @@ export class TripsListComponent implements OnInit {
   onQr(item: any) { this.selectedTrip = item; this.showQrModal = true; }
   onQrClose()     { this.showQrModal = false; this.selectedTrip = null; }
 
+  /** Advances to the requested page and triggers a full network fetch. */
   changePage(page: number) {
     this.currentPage = page;
     this.loadPage(page);
   }
 
+  /**
+   * Fetches the given page of trips together with the latest transport and employee
+   * data in a single `forkJoin`, then re-renders the list with `renderData()`.
+   * @param page - 1-based page number to load.
+   */
   loadPage(page: number) {
     this.loading = true;
     forkJoin([

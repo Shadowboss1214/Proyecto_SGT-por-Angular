@@ -41,29 +41,43 @@ export class TransportService {
     });
   }
 
-  /**
-   * Returns the live transport stream.
-   * Subscribers receive the current snapshot immediately, then all subsequent mutations.
-   * @returns Observable that never completes for the lifetime of the service.
-   */
   /** Synchronous snapshot of the current cached list. Empty array if nothing loaded yet. */
   get snapshot(): Transport[] { return [...this.data]; }
 
+  /**
+   * Returns the live transport stream backed by `BehaviorSubject`.
+   * Subscribers receive the current snapshot immediately, then all subsequent mutations.
+   */
   getAll(): Observable<Transport[]> {
     return this.data$;
   }
 
+  /**
+   * Returns the cached transport if present; otherwise fetches from the API.
+   * @param id - Primary key of the transport unit.
+   */
   getById(id: number): Observable<Transport> {
     const hit = this.data.find(t => t.id_transport === id);
     if (hit) return of(hit);
     return this.http.get<Transport>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() });
   }
 
+  /**
+   * Synchronous cache lookup by primary key; returns `undefined` when not found.
+   * Prefer `getById()` in components — this is intended for components that need
+   * a result without subscribing (e.g. form pre-population before init).
+   * @param id - Primary key of the transport unit.
+   */
   findInCache(id: number): Transport | undefined {
     return this.data.find(t => t.id_transport === id);
   }
 
-  // ✅ CREATE: no envía id_transport, Supabase lo genera con nextval()
+  /**
+   * Creates a transport unit via POST, stripping `id_transport` so the database
+   * generates the primary key automatically via `SERIAL` / `nextval()`.
+   * Invalidates the cache and re-fetches after success.
+   * @param data - Transport record to persist; `id_transport` is ignored.
+   */
   create(data: Transport): Observable<any> {
     const { id_transport, ...payload } = data;
     return this.http.post<any>(this.apiUrl, payload, { headers: this.getHeaders() }).pipe(
@@ -71,6 +85,13 @@ export class TransportService {
     );
   }
 
+  /**
+   * Updates a transport unit via PATCH (partial update); strips `id_transport` from
+   * the body since the ID is already in the URL. Uses PATCH rather than PUT to allow
+   * the backend to apply field-level merging.
+   * @param id - Primary key of the transport unit.
+   * @param transportData - Full transport record (only sent fields will differ from PATCH semantics).
+   */
   update(id: number, transportData: Transport): Observable<any> {
     const { id_transport, ...payload } = transportData;
     return this.http.patch<any>(`${this.apiUrl}/${id}`, payload, { headers: this.getHeaders() }).pipe(
@@ -78,6 +99,10 @@ export class TransportService {
     );
   }
 
+  /**
+   * Deletes a transport unit by ID and invalidates the cache so the list refreshes.
+   * @param id - Primary key of the transport unit to delete.
+   */
   delete(id: number): Observable<any> {
     return this.http.delete<any>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() }).pipe(
       tap(() => { this.invalidate(); this.getLatestTransports().subscribe(); })
@@ -89,6 +114,12 @@ export class TransportService {
     this.dataSubject.next([...this.data]);
   }
 
+  /**
+   * Fetches a page of transports from the API, replaces the internal cache, and
+   * updates the pagination counters. Pushes the result to all `data$` subscribers.
+   * @param page - 1-based page number (defaults to 1).
+   * @returns Observable emitting the fetched page as a plain array.
+   */
   getLatestTransports(page: number = 1): Observable<Transport[]> {
     return this.http.get<any>(`${this.apiUrl}?page=${page}`, { headers: this.getHeaders() }).pipe(
       map(response => {
@@ -103,6 +134,10 @@ export class TransportService {
     );
   }
 
+  /**
+   * Clears the in-memory cache so the next `getLatestTransports()` call hits the network.
+   * Called automatically after every mutation (create, update, delete).
+   */
   private invalidate(): void {
     this.data = [];
   }

@@ -47,10 +47,17 @@ export class TripService {
   /** Synchronous snapshot of the current cached list. Empty array if nothing loaded yet. */
   get snapshot(): Trip[] { return [...this.data]; }
 
+  /** Returns the live trip stream backed by `BehaviorSubject`. */
   getAll(): Observable<Trip[]> {
     return this.data$;
   }
 
+  /**
+   * Fetches a page of trips from the API, replaces the internal cache, and
+   * updates the pagination counters. Pushes the result to all `data$` subscribers.
+   * @param page - 1-based page number (defaults to 1).
+   * @returns Observable emitting the fetched page as a plain array.
+   */
   getLatestTrips(page: Number = 1): Observable<Trip[]> {
     return this.http.get<any>(`${this.apiUrl}?page=${page}`, { headers: this.getHeaders() }).pipe(
       map(response => {
@@ -64,16 +71,29 @@ export class TripService {
     );
   }
 
+  /**
+   * Clears the in-memory cache so the next `getLatestTrips()` call hits the network.
+   * Called automatically after every mutation (create, update, delete).
+   */
   private invalidate(): void {
     this.data = [];
   }
 
+  /**
+   * Returns the cached trip if present; otherwise fetches from the API.
+   * @param id - Primary key of the trip.
+   */
   getById(id: number): Observable<Trip> {
     const hit = this.data.find(t => t.id_trip === id);
     if (hit) return of(hit);
     return this.http.get<Trip>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() });
   }
 
+  /**
+   * Creates a trip via POST, stripping `id_trip` so the database generates the
+   * primary key automatically. Invalidates the cache and re-fetches after success.
+   * @param tripData - Full trip record; `id_trip` is ignored.
+   */
   create(tripData: Trip): Observable<any> {
     const { id_trip, ...payload } = tripData;
     return this.http.post<any>(this.apiUrl, payload, { headers: this.getHeaders() }).pipe(
@@ -81,12 +101,22 @@ export class TripService {
     );
   }
 
+  /**
+   * Updates a trip via PUT (full replacement) and invalidates the cache afterwards.
+   * Uses PUT rather than PATCH because the backend expects all fields to be present.
+   * @param id - Primary key of the trip to update.
+   * @param tripData - Complete trip record to replace the stored one.
+   */
   update(id: number, tripData: Trip): Observable<any> {
     return this.http.put<any>(`${this.apiUrl}/${id}`, tripData, { headers: this.getHeaders() }).pipe(
       tap(() => { this.invalidate(); this.getLatestTrips().subscribe(); })
     );
   }
 
+  /**
+   * Deletes a trip by ID and invalidates the cache so the list refreshes.
+   * @param id - Primary key of the trip to delete.
+   */
   delete(id: number): Observable<any> {
     return this.http.delete<any>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() }).pipe(
       tap(() => { this.invalidate(); this.getLatestTrips().subscribe(); })

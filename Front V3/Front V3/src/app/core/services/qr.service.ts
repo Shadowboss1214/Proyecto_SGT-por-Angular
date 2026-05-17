@@ -13,6 +13,16 @@ export class QrService {
   private readonly FRONTEND_BASE = 'http://localhost:4200/app/admin';
   private auth = inject(AuthService);
 
+  /**
+   * Generates a QR code for a given REST entity and ID.
+   *
+   * Tries the backend first (`/qr/{entity}/{id}`); on any failure falls back to
+   * client-side generation with the `qrcode` library, pointing to the frontend URL.
+   * The library is loaded dynamically so it is excluded from the initial bundle.
+   * @param entity - Resource name as it appears in the API path (e.g. `'trips'`, `'transport'`).
+   * @param id - Primary key of the resource.
+   * @returns Promise resolving to a Base64 PNG Data URL.
+   */
   async generateQr(entity: string, id: number): Promise<string> {
     try {
       const token = this.auth.getToken();
@@ -30,6 +40,11 @@ export class QrService {
     }
   }
 
+  /**
+   * Convenience wrapper that generates a QR code for a trip resource.
+   * @param tripId - Primary key of the trip.
+   * @returns Promise resolving to a Base64 PNG Data URL.
+   */
   generateTripQr(tripId: number): Promise<string> {
     return this.generateQr('trips', tripId);
   }

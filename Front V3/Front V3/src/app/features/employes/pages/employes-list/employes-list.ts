@@ -41,6 +41,14 @@ export class EmployeeListComponent implements OnInit {
     { label: 'Salario', field: 'salary' }
   ];
 
+  /**
+   * Subscribes to the employee stream and loads the first page if the cache is cold.
+   *
+   * Two separate subscriptions run in parallel: `getAll()` keeps the template in sync
+   * with any mutation pushed by the service, while `loadPage(1)` seeds the cache when
+   * no snapshot exists yet. When the cache is warm, pagination state is restored directly
+   * from the service so no network call is made.
+   */
   ngOnInit() {
     this.service.getAll().subscribe(data => {
       this.Employes = data;
@@ -102,11 +110,17 @@ export class EmployeeListComponent implements OnInit {
   onQr(item: any) { this.selectedEmployee = item; this.showQrModal = true; }
   onQrClose() { this.showQrModal = false; this.selectedEmployee = null; }
 
+  /** Advances to the requested page and triggers a network fetch. */
   changePage(page: number) {
     this.currentPage = page;
     this.loadPage(page);
   }
 
+  /**
+   * Fetches the given page from the API and syncs pagination state.
+   * Updates `currentPage` and `totalPages` from the service after the response.
+   * @param page - 1-based page number to load.
+   */
   loadPage(page: number) {
     this.loading = true;
     this.service.getLatestEmployees(page).subscribe({

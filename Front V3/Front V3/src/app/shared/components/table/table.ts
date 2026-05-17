@@ -22,7 +22,9 @@ export class TableComponent {
 
   /** Column definitions that determine which fields are shown and their display labels. */
   @Input() columns: TableColumn[] = [];
+  /** Current active page number; used to highlight the active pagination button. */
   @Input() currentPage: number = 1;
+  /** Total number of pages; drives the page button list and disables next/prev at boundaries. */
   @Input() totalPages: number = 1;
 
   /** Emitted when the user clicks the view/detail action for a row. */
@@ -37,27 +39,38 @@ export class TableComponent {
   /** Emitted when the user clicks the QR action; payload is the full row object. */
   @Output() qr = new EventEmitter<any>();
 
+  /** Emitted with the new page number when the user clicks a pagination control. */
   @Output() pageChange = new EventEmitter<number>();
 
-    get pages(): number[] {
+  /**
+   * Generates a 1-based array of page indices for rendering numbered page buttons.
+   * @returns Array `[1, 2, ..., totalPages]`.
+   */
+  get pages(): number[] {
     return Array.from(
       { length: this.totalPages },
       (_, i) => i + 1
     );
   }
 
+  /** Emits the previous page number; no-op when already on the first page. */
   prev() {
     if (this.currentPage > 1) {
       this.pageChange.emit(this.currentPage - 1);
     }
   }
 
+  /** Emits the next page number; no-op when already on the last page. */
   next() {
     if (this.currentPage < this.totalPages) {
       this.pageChange.emit(this.currentPage + 1);
     }
   }
 
+  /**
+   * Emits the requested page number directly; used by the numbered page buttons.
+   * @param page - Target page number (1-based).
+   */
   goTo(page: number) {
     this.pageChange.emit(page);
   }
