@@ -163,7 +163,7 @@ Proyecto_SGT-por-Angular/
 ```
 ---
 
-## Especificación 1 — Aplicación web con esquema MVC
+## Aplicación web con esquema MVC
 
 El proyecto implementa el patrón MVC en dos capas que se complementan:
 
@@ -187,7 +187,7 @@ Ambas capas se comunican exclusivamente a través de la API REST del backend; el
 
 ---
 
-## Especificación 2 — Autenticación y Autorización (JWT y OAuth)
+## Autenticación y Autorización (JWT y OAuth)
 
 El sistema implementa el flujo **OAuth2 Password Grant** respaldado por Laminas API Tools OAuth2. El backend actúa simultáneamente como servidor de autorización y servidor de recursos:
 
@@ -213,7 +213,7 @@ El sistema implementa el flujo **OAuth2 Password Grant** respaldado por Laminas 
 
 ---
 
-## Especificación 3 — Generación de Códigos QR
+## Generación de Códigos QR
 
 El sistema genera un código QR único por cada viaje registrado. El QR codifica la URL del endpoint REST del backend correspondiente al viaje (`http://localhost:8080/trips/{id_trip}`), de modo que al escanearlo se accede directamente al recurso del viaje a través de la API.
 
@@ -230,7 +230,7 @@ El sistema genera un código QR único por cada viaje registrado. El QR codifica
 
 ---
 
-## Especificación 4 — CRUD: Catálogos y Formularios
+## CRUD: Catálogos y Formularios
 
 El sistema implementa operaciones CRUD completas (Crear, Leer, Actualizar, Eliminar) sobre tres entidades de dominio: **Empleados**, **Transportes** y **Viajes**. Cada entidad sigue el mismo patrón arquitectónico:
 
@@ -257,7 +257,7 @@ En el backend, el módulo `employees` expone el endpoint REST `/employees[/:empl
 
 ---
 
-## Especificación 5 — Reportes en formato PDF y hoja de cálculo
+## Reportes en formato PDF y hoja de cálculo
 
 El sistema genera reportes descargables en dos formatos desde las vistas de lista de **Empleados** y **Viajes**:
 
@@ -282,7 +282,7 @@ Toda la lógica de generación se centraliza en un único `ReportService` inyect
 
 ---
 
-## Especificación 6 — Administración de usuarios y permisos
+## Administración de usuarios y permisos
 
 El sistema implementa un esquema de **dos roles** (`ADMIN` y `DRIVER`) que controlan tanto el acceso a las rutas de la SPA como la visibilidad de los datos:
 
