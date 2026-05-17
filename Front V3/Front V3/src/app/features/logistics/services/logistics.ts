@@ -8,7 +8,7 @@ import { environment } from '../../../../environments/environment';
 @Injectable({ providedIn: 'root' })
 export class LogisticsService {
 
-  private apiUrl = `${environment.apiUrl}/logistics`;
+  private apiUrl = `${environment.apiUrl}/trips`;
   private cache: any = null;
 
   constructor(private http: HttpClient, private authService: AuthService) {}
