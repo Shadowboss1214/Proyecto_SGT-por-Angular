@@ -7,6 +7,7 @@
 return [
     'Laminas\\Mvc\\I18n',
     'Laminas\\I18n',
+    'Laminas\\ComposerAutoloading',
     'Laminas\\Db',
     'Laminas\\Filter',
     'Laminas\\Hydrator',

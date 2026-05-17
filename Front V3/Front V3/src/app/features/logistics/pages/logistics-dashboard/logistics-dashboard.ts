@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LogisticsService } from '../../services/logistics';
+import { ReportService } from '../../../../core/services/report.service';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, Chart, registerables } from 'chart.js';
 Chart.register(...registerables);
@@ -15,6 +16,7 @@ Chart.register(...registerables);
 export class LogisticsDashboardComponent implements OnInit {
 
   private logisticsService = inject(LogisticsService);
+  private reportService = inject(ReportService);
   private cdr = inject(ChangeDetectorRef);
 
   totalIncome = 0;
@@ -23,6 +25,13 @@ export class LogisticsDashboardComponent implements OnInit {
   efficiency  = 0;
   totalTrips  = 0;
   insight     = '';
+
+  private tripsByDay: Record<string, number> = {};
+
+  columns = [
+    { label: 'Métrica', field: 'metrica' },
+    { label: 'Valor',   field: 'valor'   },
+  ];
 
   barChartData: ChartConfiguration<'bar'>['data'] = {
     labels: ['Ingresos', 'Gastos'],
@@ -42,6 +51,7 @@ export class LogisticsDashboardComponent implements OnInit {
       this.efficiency  = metrics.efficiency;
       this.totalTrips  = metrics.total_trips;
       this.insight     = metrics.insight;
+      this.tripsByDay  = metrics.trips_by_day ?? {};
 
       this.barChartData = {
         labels: ['Ingresos', 'Gastos'],
@@ -55,4 +65,30 @@ export class LogisticsDashboardComponent implements OnInit {
     });
     this.cdr.detectChanges();
   }
+
+  get reportData() {
+    const fmt = (v: number) => v.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
+    const rows: { metrica: string; valor: string }[] = [
+      { metrica: 'Ingresos Totales', valor: fmt(this.totalIncome) },
+      { metrica: 'Gastos Totales',   valor: fmt(this.totalCost)   },
+      { metrica: 'Utilidad',         valor: fmt(this.profit)      },
+      { metrica: 'Eficiencia',       valor: `${this.efficiency.toFixed(2)} %` },
+      { metrica: 'Total de Viajes',  valor: String(this.totalTrips) },
+      ...Object.entries(this.tripsByDay).map(([date, count]) => ({
+        metrica: `Viajes ${date}`,
+        valor: String(count),
+      })),
+    ];
+    return rows;
+  }
+
+  exportPdf(): void {
+    this.reportService.exportToPdf(this.reportData, this.columns, 'Reporte de Logística');
+  }
+
+  exportExcel(): void {
+    this.reportService.exportToExcel(this.reportData, this.columns, 'reporte_logistica');
+  }
+
+
 }
