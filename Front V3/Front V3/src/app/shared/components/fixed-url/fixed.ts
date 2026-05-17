@@ -17,11 +17,22 @@ import { PathLocationStrategy } from '@angular/common';
 @Injectable()
 export class FixedLocationStrategy extends PathLocationStrategy {
 
-  /**
-   * The current internal Angular route, tracked in memory.
-   * Initialized to `/Bus.inc.com` and updated on every navigation event.
-   */
-  private internalUrl = '/Bus.inc.com'; 
+/**
+ * Custom location strategy that keeps the browser URL fixed at `/Bus.inc.com`
+ * while tracking the actual internal route in memory and `sessionStorage`.
+ *
+ * This prevents 404 errors on page refresh in environments where the server
+ * is not configured to redirect all routes to `index.html`, by ensuring the
+ * browser always requests the same base URL regardless of the Angular route.
+ *
+ * @remarks
+ * Extends Angular's `PathLocationStrategy` and overrides `path()`,
+ * `pushState()`, and `replaceState()` to intercept all navigation events.
+ */
+  private internalUrl: string = (() => {
+    const real = window.location.pathname;
+    return real && real !== '/' ? real : '/Bus.inc.com';
+  })();
 
    /**
    * Returns the current internal route as seen by the Angular Router.
@@ -30,7 +41,7 @@ export class FixedLocationStrategy extends PathLocationStrategy {
    * @returns The current internal route string
    */
   override path(): string {
-    return this.internalUrl; 
+    return this.internalUrl;
   }
 
   /**
@@ -44,9 +55,9 @@ export class FixedLocationStrategy extends PathLocationStrategy {
    * @param queryParams - Query parameter string to append to the URL
    */
   override pushState(state: any, title: string, url: string, queryParams: string): void {
-    this.internalUrl = url;                         
-    sessionStorage.setItem('last_route', url);     
-    super.pushState(state, title, '/Bus.inc.com', '');     
+    this.internalUrl = url;
+    sessionStorage.setItem('last_route', url);
+    super.pushState(state, title, '/Bus.inc.com', '');
   }
 
     /**
@@ -60,8 +71,8 @@ export class FixedLocationStrategy extends PathLocationStrategy {
    * @param queryParams - Query parameter string to append to the URL
    */
   override replaceState(state: any, title: string, url: string, queryParams: string): void {
-    this.internalUrl = url;                     
-    sessionStorage.setItem('last_route', url);     
-    super.replaceState(state, title, '/Bus.inc.com', '');   
+    this.internalUrl = url;
+    sessionStorage.setItem('last_route', url);
+    super.replaceState(state, title, '/Bus.inc.com', '');
   }
 }

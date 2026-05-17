@@ -25,17 +25,19 @@ import { QrService } from '../../../../core/services/qr.service';
 })
 export class TransportDetailComponent implements OnInit {
 
-  transport?: Transport;
 
-  private route = inject(ActivatedRoute);
-  private router = inject(NavigationService);
-  private service = inject(TransportService);
+
+  private route     = inject(ActivatedRoute);
+  private router    = inject(NavigationService);
+  private service   = inject(TransportService);
   private qrService = inject(QrService);
-  private cdr = inject(ChangeDetectorRef);
+  private cdr       = inject(ChangeDetectorRef);
 
+    transport?: Transport;
   /** Whether the component is in edit or create mode */
-  isEdit = false;
-  loading = false;
+  
+  isEdit   = false;
+  loading  = false;
   qrDataUrl: string | null = null;
 
   /**
@@ -53,33 +55,38 @@ export class TransportDetailComponent implements OnInit {
     this.isEdit = url.includes('edit') || isNew;
 
     if (id && !isNew) {
-      this.loading = true;
-      this.service.getById(Number(id)).subscribe({
-        next: t => {
-          this.transport = t;
-          this.loading = false;
-          this.cdr.detectChanges();
-          this.loadQr('transport', t.id_transport);
-        },
-        error: () => {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }
-      });
+      const cached = this.service.snapshot.find(t => t.id_transport === Number(id));
+
+      if (cached) {
+        this.transport = cached;
+        this.loadQr('transport', cached.id_transport);
+      } else {
+        this.loading = true;
+        this.service.getById(Number(id)).subscribe({
+          next: t => {
+            this.transport = t;
+            this.loading   = false;
+            this.cdr.detectChanges();
+            this.loadQr('transport', t.id_transport);
+          },
+          error: () => {
+            this.loading = false;
+            this.cdr.detectChanges();
+          }
+        });
+      }
     }
   }
 
   private async loadQr(entity: string, id: number) {
-    try {
-      this.qrDataUrl = await this.qrService.generateQr(entity, id);
-    } catch { }
+    try { this.qrDataUrl = await this.qrService.generateQr(entity, id); } catch { }
     this.cdr.detectChanges();
   }
 
   downloadQr() {
     if (!this.qrDataUrl || !this.transport) return;
     const a = document.createElement('a');
-    a.href = this.qrDataUrl;
+    a.href  = this.qrDataUrl;
     a.download = `transport-${this.transport.id_transport}-qr.png`;
     a.click();
   }
@@ -91,12 +98,8 @@ export class TransportDetailComponent implements OnInit {
    * @param id - String representation of the transport's unique identifier
    */
   delete(id: string) {
-    this.service.delete(Number(id)).subscribe(() => {
-      this.router.navigate(['/transport']);
-    });
+    this.service.delete(Number(id)).subscribe(() => this.router.navigate(['/transport']));
   }
 
-  goBack() {
-    this.router.navigate(['/transport']);
-  }
+  goBack() { this.router.navigate(['/transport']); }
 }

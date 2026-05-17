@@ -62,7 +62,16 @@ export class TransportListComponent implements OnInit {
     { label: 'Consumo combustible',  field: 'fuelconsumption' }
   ];
 
-  ngOnInit() { this.loadTransports(1); }
+  ngOnInit() {
+    if (this.service.snapshot.length > 0) {
+      this.transports = this.service.snapshot;
+      this.loading = false;
+      this.currentPage = this.service.page;
+      this.totalPages  = this.service.total;
+    } else {
+      this.loadTransports(1);
+    }
+  }
 
    /**
    * Navigates to the read-only detail view of the selected transport.

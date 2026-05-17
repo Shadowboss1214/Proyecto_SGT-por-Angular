@@ -1,6 +1,10 @@
 @if (loading) {
   <div class="container">
-    <p class="loading">Cargando...</p>
+    <button class="btn-back" (click)="goBack()">← Volver</button>
+    <div class="loading-state">
+      <span class="spinner"></span>
+      <p>Cargando vehículo...</p>
+    </div>
   </div>
 }
 
