@@ -42,8 +42,18 @@ export class EmployeeListComponent implements OnInit {
   ];
 
   ngOnInit() {
-    this.service.getAll().subscribe(data => this.Employes = data);
-    this.loadPage(1);
+    this.service.getAll().subscribe(data => {
+      this.Employes = data;
+      this.cdr.detectChanges();
+    });
+
+    if (this.service.snapshot.length > 0) {
+      this.loading = false;
+      this.currentPage = this.service.page;
+      this.totalPages  = this.service.total;
+    } else {
+      this.loadPage(1);
+    }
   }
 
   /**

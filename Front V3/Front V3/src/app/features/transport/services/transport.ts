@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { Transport } from '../models/transport';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { map, tap } from 'rxjs/operators';
@@ -46,11 +46,16 @@ export class TransportService {
    * Subscribers receive the current snapshot immediately, then all subsequent mutations.
    * @returns Observable that never completes for the lifetime of the service.
    */
+  /** Synchronous snapshot of the current cached list. Empty array if nothing loaded yet. */
+  get snapshot(): Transport[] { return [...this.data]; }
+
   getAll(): Observable<Transport[]> {
     return this.data$;
   }
 
   getById(id: number): Observable<Transport> {
+    const hit = this.data.find(t => t.id_transport === id);
+    if (hit) return of(hit);
     return this.http.get<Transport>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() });
   }
 

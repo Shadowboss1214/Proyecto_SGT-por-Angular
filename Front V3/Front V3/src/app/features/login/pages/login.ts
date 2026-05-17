@@ -46,7 +46,11 @@ export class LoginComponent {
               this.authService.saveRole(current.role);
               this.authService.saveEmployeeId(current.id_employee);
 
-              if (current.role === 'ADMIN') {
+              const redirect = sessionStorage.getItem('redirect_after_login');
+              if (redirect && redirect !== '/Bus.inc.com' && redirect !== '/') {
+                sessionStorage.removeItem('redirect_after_login');
+                this.router.navigate([redirect]);
+              } else if (current.role === 'ADMIN') {
                 this.router.navigate(['/app/admin/dashboard']);
               } else {
                 this.router.navigate(['/app/driver/dashboard']);

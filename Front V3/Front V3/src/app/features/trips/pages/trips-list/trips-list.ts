@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { combineLatest } from 'rxjs';
+import { forkJoin } from 'rxjs';
 import { TripService } from '../../services/trips';
 import { Trip, Route } from '../../models/trips';
 import { RouterModule, ActivatedRoute } from '@angular/router';
@@ -32,16 +32,14 @@ export class TripsListComponent implements OnInit {
   private reportService    = inject(ReportService);
   private cdr              = inject(ChangeDetectorRef);
 
-  /** Current user role, read from route data to determine visibility and filtering rules. */
   role = this.route.pathFromRoot
     .map(r => r.snapshot.data['role'])
     .find(role => !!role) as 'admin' | 'driver';
 
   loading = true;
-  employes: Employee[]  = [];
+  employes: Employee[]   = [];
   transport: Transport[] = [];
 
-  /** Static route catalog; used to resolve route labels from FK values in trip records. */
   tripRoute: Route[] = [
     { id_route: 1, origin: 'Ciudad de México', destine: 'Guadalajara', distance: 541 },
     { id_route: 2, origin: 'Guadalajara',      destine: 'Monterrey',   distance: 742 },
@@ -51,7 +49,7 @@ export class TripsListComponent implements OnInit {
   ];
 
   search = '';
-  Trips: Trip[] = [];
+  Trips: Trip[]    = [];
   tripsView: any[] = [];
   currentPage = 1;
   totalPages  = 1;
@@ -65,41 +63,51 @@ export class TripsListComponent implements OnInit {
     { label: 'Fecha',      field: 'date' }
   ];
 
-  private initialized = false;
-
-  /**
-   * Subscribes to all three service streams simultaneously so the table rebuilds
-   * whenever any of trips, transports, or employees changes.
-   * Driver role filtering uses the employee ID embedded in the JWT payload.
-   */
   ngOnInit() {
-    this.service.getLatestTrips().subscribe();
-    this.transportService.getLatestTransports().subscribe();
-    this.employeeService.getLatestEmployees().subscribe();
+    const allCached = this.service.snapshot.length > 0
+      && this.transportService.snapshot.length > 0
+      && this.employeeService.snapshot.length > 0;
 
-    combineLatest([
-      this.service.getAll(),
-      this.transportService.getAll(),
-      this.employeeService.getAll()
-    ]).subscribe(([trips, transports, employees]) => {
-      this.transport = transports;
-      this.employes  = employees;
-
-      if (this.role === 'driver') {
-        const employeeId = Number(this.authService.getEmployeeId());
-        this.Trips = trips.filter(t => t.id_employee === employeeId);
-        this.tripsView = this.buildView(this.Trips);
-        this.loading = false;
-        this.cdr.detectChanges();
-      } else {
-        this.Trips = trips;
-        this.tripsView = this.buildView(this.Trips);
-        if (!this.initialized) {
-          this.initialized = true;
-          this.loadPage(1);
+    if (allCached) {
+      this.renderData(
+        this.service.snapshot,
+        this.transportService.snapshot,
+        this.employeeService.snapshot
+      );
+      this.currentPage = this.service.page;
+      this.totalPages  = this.service.total;
+      this.loading = false;
+    } else {
+      forkJoin([
+        this.service.getLatestTrips(1),
+        this.transportService.getLatestTransports(),
+        this.employeeService.getLatestEmployees()
+      ]).subscribe({
+        next: ([trips, transports, employees]) => {
+          this.renderData(trips, transports, employees);
+          this.currentPage = this.service.page;
+          this.totalPages  = this.service.total;
+          this.loading = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.loading = false;
+          this.cdr.detectChanges();
         }
-      }
-    });
+      });
+    }
+  }
+
+  private renderData(trips: Trip[], transports: Transport[], employees: Employee[]) {
+    this.transport = transports;
+    this.employes  = employees;
+
+    const filtered = this.role === 'driver'
+      ? trips.filter(t => t.id_employee === Number(this.authService.getEmployeeId()))
+      : trips;
+
+    this.Trips     = filtered;
+    this.tripsView = this.buildView(filtered);
   }
 
   private buildView(trips: Trip[]): any[] {
@@ -113,7 +121,11 @@ export class TripsListComponent implements OnInit {
 
   onView(item: any)   { this.router.navigate(['/trips', item.id_trip]); }
   onEdit(item: any)   { this.router.navigate(['/trips', item.id_trip, 'edit']); }
-  onDelete(item: any) { this.service.delete(item.id_trip).subscribe(); }
+  onDelete(item: any) {
+    this.service.delete(item.id_trip).subscribe({
+      next: () => this.loadPage(this.currentPage)
+    });
+  }
 
   getTransportName(id: number) { return this.transport.find(t => t.id_transport === id)?.name ?? 'N/A'; }
   getEmployeeName(id: number)  { return this.employes.find(e => e.id_employee === id)?.name ?? 'N/A'; }
@@ -122,10 +134,6 @@ export class TripsListComponent implements OnInit {
     return r ? `${r.origin} - ${r.destine}` : 'N/A';
   }
 
-  /**
-   * Client-side filter over the denormalized tripsView; matches transport or employee name.
-   * No server round-trip; reflects the latest search value immediately.
-   */
   get filtered() {
     const s = this.search.toLowerCase();
     return this.tripsView.filter(t =>
@@ -139,10 +147,7 @@ export class TripsListComponent implements OnInit {
   exportPdf()   { this.reportService.exportToPdf(this.filtered, this.columns, 'Reporte de Viajes'); }
   exportExcel() { this.reportService.exportToExcel(this.filtered, this.columns, 'reporte_viajes.xlsx'); }
 
-  /** Controls QR modal visibility; true while the modal is open. */
-  showQrModal = false;
-
-  /** The trip row currently selected for QR display; passed to QrModalComponent via @Input. */
+  showQrModal  = false;
   selectedTrip: any = null;
 
   onQr(item: any) { this.selectedTrip = item; this.showQrModal = true; }
@@ -155,8 +160,13 @@ export class TripsListComponent implements OnInit {
 
   loadPage(page: number) {
     this.loading = true;
-    this.service.getLatestTrips(page).subscribe({
-      next: () => {
+    forkJoin([
+      this.service.getLatestTrips(page),
+      this.transportService.getLatestTransports(),
+      this.employeeService.getLatestEmployees()
+    ]).subscribe({
+      next: ([trips, transports, employees]) => {
+        this.renderData(trips, transports, employees);
         this.currentPage = this.service.page;
         this.totalPages  = this.service.total;
         this.loading = false;

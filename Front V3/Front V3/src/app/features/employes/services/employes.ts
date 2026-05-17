@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { Employee } from '../models/employee';
 import { AuthService } from '../../../core/services/auth.service';
@@ -44,6 +44,9 @@ export class EmployeeService {
     this.dataSubject.next([...this.data]);
   }
 
+  /** Synchronous snapshot of the current cached list. Empty array if nothing loaded yet. */
+  get snapshot(): Employee[] { return [...this.data]; }
+
   getAll(): Observable<Employee[]> {
     return this.data$;
   }
@@ -68,6 +71,8 @@ export class EmployeeService {
   }
 
   getById(id: number): Observable<Employee> {
+    const hit = this.data.find(e => e.id_employee === id);
+    if (hit) return of(hit);
     return this.http.get<Employee>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() });
   }
 

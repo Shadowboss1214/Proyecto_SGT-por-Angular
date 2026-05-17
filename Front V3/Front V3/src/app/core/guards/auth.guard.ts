@@ -1,28 +1,17 @@
 import { inject } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivateFn } from '@angular/router';
+import { ActivatedRouteSnapshot, CanActivateFn, RouterStateSnapshot } from '@angular/router';
 import { catchError, map, of } from 'rxjs';
 import { NavigationService } from '../../core/services/nav.service';
 import { AuthService } from '../services/auth.service';
 
-/**
- * Functional route guard (CanActivateFn) protecting /app/admin and /app/driver.
- *
- * Allows navigation only when a valid, non-expired JWT exists in localStorage.
- * Expiration is checked client-side by comparing `payload.exp` with the current
- * time; the backend independently validates the token on every API call, so this
- * guard is a UX safeguard that prevents entering a broken UI state, not the
- * security boundary.
- *
- * On failure: calls AuthService.logout() to clear stale tokens, then redirects to
- * /app/login.
- * @returns true if the token exists and has not expired; false otherwise.
- */
-export const authGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
+export const authGuard: CanActivateFn = (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
   const auth = inject(AuthService);
-  const nav = inject(NavigationService);
+  const nav  = inject(NavigationService);
 
   const token = auth.getToken();
   if (!token) {
+    // Guardar la URL destino para redirigir después del login (p.ej. link de QR)
+    sessionStorage.setItem('redirect_after_login', state.url);
     nav.navigate(['/app/login']);
     return false;
   }
@@ -31,6 +20,7 @@ export const authGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
     const refreshToken = auth.getRefreshToken();
     if (!refreshToken) {
       auth.logout();
+      sessionStorage.setItem('redirect_after_login', state.url);
       nav.navigate(['/app/login']);
       return false;
     }
@@ -39,6 +29,7 @@ export const authGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
       map(() => checkRole(route, auth, nav)),
       catchError(() => {
         auth.logout();
+        sessionStorage.setItem('redirect_after_login', state.url);
         nav.navigate(['/app/login']);
         return of(false);
       })
