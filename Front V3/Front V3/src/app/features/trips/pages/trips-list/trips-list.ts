@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { combineLatest } from 'rxjs';
 import { TripService } from '../../services/trips';
@@ -29,6 +29,7 @@ export class TripsListComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
   private reportService = inject(ReportService);
+  private cdr = inject(ChangeDetectorRef);
 
   role = this.route.pathFromRoot
     .map(r => r.snapshot.data['role'])
@@ -47,6 +48,8 @@ export class TripsListComponent implements OnInit {
   search = '';
   statusFilter = '';
   Trips: Trip[] = [];
+  currentPage = 1;
+  totalPages = this.service.total;
 
   columns = [
     { label: 'Transporte', field: 'transportName' },
@@ -63,6 +66,7 @@ export class TripsListComponent implements OnInit {
     this.service.getLatestTrips().subscribe();
     this.transportService.getLatestTransports().subscribe();
     this.employeeService.getLatestEmployees().subscribe();
+    this.loadPage(1);
 
     combineLatest([
       this.service.getAll(),
@@ -149,5 +153,19 @@ export class TripsListComponent implements OnInit {
   onQrClose() {
     this.showQrModal = false;
     this.selectedTrip = null;
+  }
+
+  changePage(page: number) {
+    this.currentPage = page;
+
+    this.loadPage(page);
+  }
+
+  loadPage(page: number) {
+    this.service.getLatestTrips(page).subscribe(() => {
+      this.currentPage = this.service.page;
+      this.totalPages = this.service.total;
+      this.cdr.detectChanges();
+    });
   }
 }

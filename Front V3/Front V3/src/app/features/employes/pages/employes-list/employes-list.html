@@ -15,10 +15,16 @@
     </button>
 </div>
 
-<app-table 
+
+<app-table
   [data]="filtered"
   [columns]="columns"
   (view)="onView($event)"
   (edit)="onEdit($event)"
-  (delete)="onDelete($event)">
+  (delete)="onDelete($event)"
+
+  [currentPage]="currentPage"
+  [totalPages]="totalPages"
+
+  (pageChange)="changePage($event)">
 </app-table>

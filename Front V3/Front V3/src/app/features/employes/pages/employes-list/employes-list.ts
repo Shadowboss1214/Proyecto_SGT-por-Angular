@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { EmployeeService } from '../../services/employes';
 import { Employee } from '../../models/employee';
@@ -19,10 +19,14 @@ export class EmployeeListComponent implements OnInit {
   private service = inject(EmployeeService);
   private router = inject(NavigationService);
   private reportService = inject(ReportService);
+  private cdr = inject(ChangeDetectorRef);
+  currentPage = 1;
+  totalPages  = this.service.total; 
 
   search = '';
   statusFilter = '';
   Employes: Employee[] = [];
+  
 
   columns = [
     { label: 'Nombre', field: 'name' },
@@ -31,7 +35,7 @@ export class EmployeeListComponent implements OnInit {
 
   ngOnInit() {
     this.service.getAll().subscribe(data => this.Employes = data);
-    this.service.getLatestEmployees().subscribe();
+    this.loadPage(1);
   }
 
   onView(item: Employee) {
@@ -63,4 +67,19 @@ export class EmployeeListComponent implements OnInit {
   exportExcel(): void {
     this.reportService.exportToExcel(this.filtered, this.columns, 'reporte_empleados.xlsx');
   }
+
+  changePage(page: number) {
+  this.currentPage = page;
+
+  this.loadPage(page);
+}
+
+loadPage(page: number) {
+  this.service.getLatestEmployees(page).subscribe(() => {
+    this.currentPage = this.service.page;   
+    this.totalPages  = this.service.total; 
+    this.cdr.detectChanges();
+  });
+}
+
 }

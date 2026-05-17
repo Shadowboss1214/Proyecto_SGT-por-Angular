@@ -25,3 +25,17 @@
     }
   </tbody>
 </table>
+
+@if (totalPages > 1) {
+  <div class="pagination">
+    <button (click)="prev()" [disabled]="currentPage === 1">← Anterior</button>
+
+    @for (p of pages; track p) {
+      <button (click)="goTo(p)" [class.active]="p === currentPage">
+        {{ p }}
+      </button>
+    }
+
+    <button (click)="next()" [disabled]="currentPage === totalPages">Siguiente →</button>
+  </div>
+}

@@ -13,8 +13,13 @@ export class TripService {
 
   private subject = new BehaviorSubject<Trip[]>(this.data);
   data$: Observable<Trip[]> = this.subject.asObservable();
+  private _currentPage = 1;
+  private _totalPages = 1;
 
-  constructor(private http: HttpClient, private authService: AuthService) {}
+  get page() { return this._currentPage; }
+  get total() { return this._totalPages; }
+
+  constructor(private http: HttpClient, private authService: AuthService) { }
 
   private getHeaders(): HttpHeaders {
     const token = this.authService.getToken();
@@ -32,12 +37,13 @@ export class TripService {
     return this.data$;
   }
 
-  getLatestTrips(): Observable<Trip[]> {
-    if (this.data.length > 0) return of(this.data);
-    return this.http.get<any>(this.apiUrl, { headers: this.getHeaders() }).pipe(
+  getLatestTrips(page: Number=1): Observable<Trip[]> {
+    return this.http.get<any>(`${this.apiUrl}?page=${page}`, { headers: this.getHeaders() }).pipe(
       map(response => {
         const list = response._embedded?.trips || [];
         this.data = list;
+        this._currentPage = response.page || page;
+        this._totalPages = response.page_count || 1;
         this.refresh();
         return [...list];
       })

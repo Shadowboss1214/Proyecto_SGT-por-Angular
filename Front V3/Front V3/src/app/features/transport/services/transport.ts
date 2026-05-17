@@ -15,6 +15,12 @@ export class TransportService {
 
   private dataSubject = new BehaviorSubject<Transport[]>(this.data);
   data$: Observable<Transport[]> = this.dataSubject.asObservable();
+  private _currentPage = 1;
+  private _totalPages = 1;
+
+  get page() { return this._currentPage; }
+  get total() { return this._totalPages; }
+
 
   constructor(private http: HttpClient, private authService: AuthService) {}
 
@@ -59,12 +65,13 @@ export class TransportService {
     this.dataSubject.next([...this.data]);
   }
 
-  getLatestTransports(): Observable<Transport[]> {
-    if (this.data.length > 0) return of(this.data);
-    return this.http.get<any>(this.apiUrl, { headers: this.getHeaders() }).pipe(
+  getLatestTransports(page: number = 1): Observable<Transport[]> {
+    return this.http.get<any>(`${this.apiUrl}?page=${page}`, { headers: this.getHeaders() }).pipe(
       map(response => {
         const list = response._embedded?.transport || [];
         this.data = list;
+        this._currentPage = response.page || page;
+        this._totalPages = response.page_count || 1;
         this.refresh();
         return [...list];
       })

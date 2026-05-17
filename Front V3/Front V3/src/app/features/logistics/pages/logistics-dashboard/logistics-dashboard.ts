@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LogisticsService } from '../../services/logistics';
 import { BaseChartDirective } from 'ng2-charts';
@@ -15,6 +15,7 @@ Chart.register(...registerables);
 export class LogisticsDashboardComponent implements OnInit {
 
   private logisticsService = inject(LogisticsService);
+  private cdr = inject(ChangeDetectorRef);
 
   totalIncome = 0;
   totalCost   = 0;
@@ -52,5 +53,6 @@ export class LogisticsDashboardComponent implements OnInit {
         datasets: [{ label: 'Viajes por día', data: Object.values(metrics.trips_by_day) }]
       };
     });
+    this.cdr.detectChanges();
   }
 }

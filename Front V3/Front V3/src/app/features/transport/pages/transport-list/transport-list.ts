@@ -19,11 +19,13 @@ export class TransportListComponent implements OnInit {
   private router = inject(NavigationService);
   private transportService = inject(TransportService);
   private cdr = inject(ChangeDetectorRef);
-  
+
   transport: Transport[] = [];
   search = '';
   statusFilter = '';
   transports: Transport[] = [];
+  currentPage = 1;
+  totalPages = this.transportService.total;
 
 
   columns = [
@@ -46,7 +48,7 @@ export class TransportListComponent implements OnInit {
 
   onDelete(item: Transport) {
     this.service.delete(item.id_transport).subscribe({
-      next: () => this.loadTransports(),
+      next: () => this.loadTransports(1),
       error: (err: any) => console.error('Error al eliminar transporte:', err)
     });
   }
@@ -74,12 +76,14 @@ export class TransportListComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.loadTransports();
+    this.loadTransports(1);
   }
 
-  loadTransports() {
-    this.transportService.getLatestTransports().subscribe({
+  loadTransports(page: number) {
+    this.transportService.getLatestTransports(page).subscribe({
       next: (data) => {
+        this.currentPage = this.transportService.page;
+        this.totalPages = this.transportService.total;
         this.transports = data;
         console.log('Transportes cargados en el Front:', this.transports);
         this.cdr.detectChanges();
@@ -88,6 +92,12 @@ export class TransportListComponent implements OnInit {
         console.error('Error al mapear la API de transportes:', err);
       }
     });
+  }
+
+  changePage(page: number) {
+    this.currentPage = page;
+
+    this.loadTransports(page);
   }
 
 }
