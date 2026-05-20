@@ -24,8 +24,8 @@ export class AuthService {
     });
   }
 
-  getEmployeeByUsername(username: string, token: string): Observable<any> {
-    return this.http.get<any>(`${this.employeeUrl}?username=${username}`, {
+  getEmployeeByUsername(username: string, token: string, page: number = 1): Observable<any> {
+    return this.http.get<any>(`${this.employeeUrl}?page=${page}`, {
       headers: new HttpHeaders({ 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' })
     });
   }
