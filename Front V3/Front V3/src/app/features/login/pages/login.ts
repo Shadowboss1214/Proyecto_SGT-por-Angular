@@ -37,44 +37,56 @@ export class LoginComponent {
         this.authService.saveToken(response.access_token);
         if (response.refresh_token) this.authService.saveRefreshToken(response.refresh_token);
 
-        this.authService.getEmployeeByUsername(this.username, response.access_token).subscribe({
-          next: (data: any) => {
-            console.log('Respuesta employees:', JSON.stringify(data));
-            console.log('Username buscado:', this.username);
-            const employees = data._embedded?.employees ?? [];
-            console.log('Empleados encontrados:', employees.length);
-            console.log('Empleados:', JSON.stringify(employees));
-            const current = employees.find((e: any) => e.username === this.username);
-            console.log('Empleado actual:', JSON.stringify(current));
+        // El JWT ya trae el rol y el employeeId en el payload
+        const payload = this.authService.getTokenPayload();
+        const role = payload?.role ?? null;
+        const employeeId = payload?.employeeId ?? null;
 
-            if (current) {
-              this.authService.saveRole(current.role);
-              this.authService.saveEmployeeId(current.id_employee);
-
-              const redirect = sessionStorage.getItem('redirect_after_login');
-              if (redirect && redirect !== '/Bus.inc.com' && redirect !== '/') {
-                sessionStorage.removeItem('redirect_after_login');
-                this.router.navigate([redirect]);
-              } else if (current.role === 'ADMIN') {
-                this.router.navigate(['/app/admin/dashboard']);
+        if (role && employeeId) {
+          //Usar directamente los datos del JWT sin llamada extra
+          this.authService.saveRole(role);
+          this.authService.saveEmployeeId(employeeId);
+          this.redirect(role);
+        } else {
+          // Fallback: buscar por ID del empleado directamente
+          this.authService.getEmployeeById(employeeId, response.access_token).subscribe({
+            next: (employee: any) => {
+              if (employee) {
+                this.authService.saveRole(employee.role);
+                this.authService.saveEmployeeId(employee.id_employee);
+                this.redirect(employee.role);
               } else {
-                this.router.navigate(['/app/driver/dashboard']);
+                this.loading = false;
+                this.error = 'Usuario no encontrado en la base de datos de empleados';
               }
-            } else {
+            },
+            error: () => {
               this.loading = false;
-              this.error = 'Usuario no encontrado en la base de datos de empleados';
+              this.error = 'Error al verificar el rol del usuario';
             }
-          },
-          error: () => {
-            this.loading = false;
-            this.error = 'Error al verificar el rol del usuario';
-          }
-        });
+          });
+        }
       },
       error: () => {
         this.loading = false;
         this.error = 'Usuario o contraseña incorrectos';
       }
     });
+  }
+
+  private redirect(role: string) {
+    const redirect = sessionStorage.getItem('redirect_after_login');
+    if (redirect && redirect !== '/Bus.inc.com' && redirect !== '/') {
+      sessionStorage.removeItem('redirect_after_login');
+      this.router.navigate([redirect]);
+      return;
+    }
+
+    const r = role.toLowerCase();
+    if (r === 'admin') {
+      this.router.navigate(['/app/admin/dashboard']);
+    } else {
+      this.router.navigate(['/app/driver/dashboard']);
+    }
   }
 }

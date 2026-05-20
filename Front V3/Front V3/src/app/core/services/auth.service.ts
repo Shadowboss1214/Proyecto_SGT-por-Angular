@@ -30,6 +30,12 @@ export class AuthService {
     });
   }
 
+  getEmployeeById(id: number, token: string): Observable<any> {
+    return this.http.get<any>(`${this.employeeUrl}/${id}`, {
+      headers: new HttpHeaders({ 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' })
+    });
+  }
+
   // ── Token storage ────────────────────────────────────────────
   saveToken(token: string)        { localStorage.setItem('access_token', token); }
   getToken(): string | null       { return localStorage.getItem('access_token'); }
