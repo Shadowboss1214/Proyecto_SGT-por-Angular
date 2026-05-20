@@ -36,36 +36,7 @@ export class LoginComponent {
       next: (response: any) => {
         this.authService.saveToken(response.access_token);
         if (response.refresh_token) this.authService.saveRefreshToken(response.refresh_token);
-
-        // El JWT ya trae el rol y el employeeId en el payload
-        const payload = this.authService.getTokenPayload();
-        const role = payload?.role ?? null;
-        const employeeId = payload?.employeeId ?? null;
-
-        if (role && employeeId) {
-          //Usar directamente los datos del JWT sin llamada extra
-          this.authService.saveRole(role);
-          this.authService.saveEmployeeId(employeeId);
-          this.redirect(role);
-        } else {
-          // Fallback: buscar por ID del empleado directamente
-          this.authService.getEmployeeById(employeeId, response.access_token).subscribe({
-            next: (employee: any) => {
-              if (employee) {
-                this.authService.saveRole(employee.role);
-                this.authService.saveEmployeeId(employee.id_employee);
-                this.redirect(employee.role);
-              } else {
-                this.loading = false;
-                this.error = 'Usuario no encontrado en la base de datos de empleados';
-              }
-            },
-            error: () => {
-              this.loading = false;
-              this.error = 'Error al verificar el rol del usuario';
-            }
-          });
-        }
+        this.findEmployee(response.access_token, 1);
       },
       error: () => {
         this.loading = false;
@@ -74,19 +45,37 @@ export class LoginComponent {
     });
   }
 
-  private redirect(role: string) {
-    const redirect = sessionStorage.getItem('redirect_after_login');
-    if (redirect && redirect !== '/Bus.inc.com' && redirect !== '/') {
-      sessionStorage.removeItem('redirect_after_login');
-      this.router.navigate([redirect]);
-      return;
-    }
+  private findEmployee(token: string, page: number) {
+    this.authService.getEmployeeByUsername(this.username, token, page).subscribe({
+      next: (data: any) => {
+        const employees = data._embedded?.employees ?? [];
+        const current = employees.find((e: any) => e.username === this.username);
 
-    const r = role.toLowerCase();
-    if (r === 'admin') {
-      this.router.navigate(['/app/admin/dashboard']);
-    } else {
-      this.router.navigate(['/app/driver/dashboard']);
-    }
+        if (current) {
+          this.authService.saveRole(current.role);
+          this.authService.saveEmployeeId(current.id_employee);
+
+          const redirect = sessionStorage.getItem('redirect_after_login');
+          if (redirect && redirect !== '/Bus.inc.com' && redirect !== '/') {
+            sessionStorage.removeItem('redirect_after_login');
+            this.router.navigate([redirect]);
+          } else if (current.role === 'ADMIN') {
+            this.router.navigate(['/app/admin/dashboard']);
+          } else {
+            this.router.navigate(['/app/driver/dashboard']);
+          }
+        } else if (page < (data.page_count ?? 1)) {
+          // No encontrado en esta página, buscar en la siguiente
+          this.findEmployee(token, page + 1);
+        } else {
+          this.loading = false;
+          this.error = 'Usuario no encontrado en la base de datos de empleados';
+        }
+      },
+      error: () => {
+        this.loading = false;
+        this.error = 'Error al verificar el rol del usuario';
+      }
+    });
   }
 }
