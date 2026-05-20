@@ -39,8 +39,13 @@ export class LoginComponent {
 
         this.authService.getEmployeeByUsername(this.username, response.access_token).subscribe({
           next: (data: any) => {
+            console.log('Respuesta employees:', JSON.stringify(data));
+            console.log('Username buscado:', this.username);
             const employees = data._embedded?.employees ?? [];
+            console.log('Empleados encontrados:', employees.length);
+            console.log('Empleados:', JSON.stringify(employees));
             const current = employees.find((e: any) => e.username === this.username);
+            console.log('Empleado actual:', JSON.stringify(current));
 
             if (current) {
               this.authService.saveRole(current.role);
